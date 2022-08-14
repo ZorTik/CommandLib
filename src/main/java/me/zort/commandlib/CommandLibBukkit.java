@@ -24,6 +24,10 @@ public class CommandLibBukkit extends CommandLib {
         boolean success = false;
         CommandMap commandMap = getCommandMap();
         if(commandMap != null) {
+            if(commandMap.getCommand(entry.getName()) != null) {
+                // Command is already registered.
+                return;
+            }
             Command command = new Command(entry.getName(), entry.getMeta().getDescription(), entry.getMeta().getUsage(), new ArrayList<>()) {
                 @Override
                 public boolean execute(CommandSender commandSender, String label, String[] args) {
