@@ -7,6 +7,15 @@ Flexible library for Bukkit &amp; BungeeCord commands. Uses simple command regis
 @CommandMeta(description = "Extended kill command!")
 public class KillCommandHandlers {
 
+    @Command("/kill {...args}")
+    public boolean permissionHandler(Player sender) {
+        if(!sender.hasPermission("example.kill")) {
+            sender.sendMessage("You don't have permission to do this!");
+            return false;
+        }
+        return true;
+    }
+
     @Command("/kill {nickname}")
     public void kill(Player sender, String nickname) {
         System.out.println("Killing " + nickname);
