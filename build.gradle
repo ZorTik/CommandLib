@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group 'me.zort'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT'
+    compileOnly 'net.md-5:bungeecord-api:1.16-R0.4'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'com.github.ZorTik'
+            artifactId = 'CommandLib'
+            version = '1.0'
+
+            from components.java
+            pom {
+                name = 'SetupLib'
+                description = 'Flexible library for Bukkit & BungeeCord commands.'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://raw.githubusercontent.com/ZorTik/CommandLib/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'zort'
+                        name = 'ZorTik'
+                        email = 'zortlegit@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
