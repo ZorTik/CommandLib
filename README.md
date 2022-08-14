@@ -4,7 +4,10 @@ Flexible library for Bukkit &amp; BungeeCord commands. Uses simple command regis
 
 ### Example:
 ```
-@CommandMeta(description = "Extended kill command!")
+@CommandMeta(
+    description = "Extended kill command!",
+    invalidSenderMessage = "&cThis command can be used only as Player!"
+)
 public class KillCommandHandlers {
 
     @Command("/kill {...args}")
