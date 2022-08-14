@@ -7,6 +7,7 @@ import me.zort.commandlib.internal.CommandEntry;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public abstract class CommandLib {
@@ -41,8 +42,10 @@ public abstract class CommandLib {
 
     // Command name with slash.
     protected void invoke(Object sender, String commandName, String[] args) {
+        ArrayList<CommandEntry> commands = new ArrayList<>(this.commands);
+        commands.sort(Comparator.comparingInt(e -> e.getSyntax().split(" ").length));
         boolean anySuccessful = false;
-        for(CommandEntry entry : commands) {
+        for(CommandEntry entry : this.commands) {
             if(entry.isErrorHandler()) {
                 continue;
             }
@@ -55,7 +58,7 @@ public abstract class CommandLib {
             }
         }
         if(!anySuccessful) {
-            for(CommandEntry command : commands) {
+            for(CommandEntry command : this.commands) {
                 if(command.isErrorHandler()) {
                     try {
                         command.invokeConditionally(sender, commandName, args);

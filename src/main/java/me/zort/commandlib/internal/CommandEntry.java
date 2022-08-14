@@ -1,5 +1,6 @@
 package me.zort.commandlib.internal;
 
+import com.google.common.primitives.Primitives;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -68,7 +69,11 @@ public class CommandEntry {
             invokeArgs[i] = value;
         }
         try {
-            method.invoke(mappingObject, invokeArgs);
+            if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
+                return (boolean) method.invoke(mappingObject, invokeArgs);
+            } else {
+                method.invoke(mappingObject, invokeArgs);
+            }
             return true;
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
