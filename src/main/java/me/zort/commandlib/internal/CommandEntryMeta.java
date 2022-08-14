@@ -9,5 +9,7 @@ public class CommandEntryMeta {
 
     private String description = "";
     private String usage = "";
+    private Class<?> requiredSenderType = Object.class;
+    private String[] invalidSenderMessage = {};
 
 }

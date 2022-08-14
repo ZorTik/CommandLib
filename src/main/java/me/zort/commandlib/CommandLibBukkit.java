@@ -2,6 +2,7 @@ package me.zort.commandlib;
 
 import me.zort.commandlib.internal.CommandEntry;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
@@ -57,6 +58,19 @@ public class CommandLibBukkit extends CommandLib {
                         registeredCommands.remove(cmd);
                     });
         }
+    }
+
+    @Override
+    public void sendMessage(Object sender, String... message) {
+        if(!(sender instanceof CommandSender)) {
+            return;
+        }
+        ((CommandSender) sender).sendMessage(message);
+    }
+
+    @Override
+    public String colorize(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
     }
 
     private CommandMap getCommandMap() {

@@ -28,6 +28,8 @@ public abstract class CommandLib {
     // This comes from behaviour of this library.
     public abstract void register(CommandEntry entry);
     public abstract void unregister(CommandEntry entry);
+    public abstract void sendMessage(Object sender, String... message);
+    public abstract String colorize(String message);
 
     public void registerAll() {
         unregisterAll();

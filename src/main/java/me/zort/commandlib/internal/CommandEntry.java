@@ -7,6 +7,7 @@ import lombok.Getter;
 import me.zort.commandlib.CommandLib;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;
+import me.zort.commandlib.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -40,14 +41,25 @@ public class CommandEntry {
             CommandMeta commandMeta = method.getDeclaringClass().getDeclaredAnnotation(CommandMeta.class);
             this.meta.setDescription(commandMeta.description());
             this.meta.setUsage(commandMeta.usage());
+            this.meta.setRequiredSenderType(commandMeta.requiredSenderType());
+            this.meta.setInvalidSenderMessage(commandMeta.invalidSenderMessage());
         }
     }
 
     public boolean invokeConditionally(Object sender, String commandName, String[] args) {
         ParseResult parseResult = parse(commandName, args);
         if(parseResult == null) {
-            // Not passes conditions.
+            // Is not passing conditions.
             return false;
+        }
+        if(!meta.getRequiredSenderType().isAssignableFrom(sender.getClass())) {
+            // Invalid sender type.
+            String[] invalidSenderMessage = meta.getInvalidSenderMessage();
+            if(invalidSenderMessage.length > 0) {
+                commandLib.sendMessage(sender, Arrays.map(invalidSenderMessage, commandLib::colorize));
+            }
+            // Returning true because we don't want to invoke invalid syntax methods.
+            return true;
         }
         Map<String, String> placeholders = parseResult.getPlaceholders();
         String[] relativeArgs = parseResult.getRelativeArgs();

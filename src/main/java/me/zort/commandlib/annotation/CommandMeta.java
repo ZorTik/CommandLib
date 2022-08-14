@@ -16,5 +16,7 @@ public @interface CommandMeta {
 
     String description() default "";
     String usage() default "";
+    Class<?> requiredSenderType() default Object.class;
+    String[] invalidSenderMessage() default {};
 
 }
