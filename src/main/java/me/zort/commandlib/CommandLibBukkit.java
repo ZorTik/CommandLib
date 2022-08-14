@@ -73,6 +73,11 @@ public class CommandLibBukkit extends CommandLib {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
 
+    @Override
+    public Class<?> getDefaultSenderType() {
+        return CommandSender.class;
+    }
+
     private CommandMap getCommandMap() {
         try {
             final Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");

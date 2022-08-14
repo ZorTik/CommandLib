@@ -1,6 +1,7 @@
 package me.zort.commandlib;
 
 import me.zort.commandlib.internal.CommandEntry;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Command;
@@ -50,6 +51,26 @@ public class CommandLibProxy extends CommandLib {
                     pluginManager.unregisterCommand(cmd);
                     registeredCommands.remove(cmd);
                 });
+    }
+
+    @Override
+    public void sendMessage(Object sender, String... message) {
+        if(!(sender instanceof CommandSender)) {
+            return;
+        }
+        for(String line : message) {
+            ((CommandSender) sender).sendMessage(line);
+        }
+    }
+
+    @Override
+    public String colorize(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
+
+    @Override
+    public Class<?> getDefaultSenderType() {
+        return CommandSender.class;
     }
 
 }

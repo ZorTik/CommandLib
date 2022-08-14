@@ -43,6 +43,18 @@ public class CommandEntry {
             this.meta.setUsage(commandMeta.usage());
             this.meta.setRequiredSenderType(commandMeta.requiredSenderType());
             this.meta.setInvalidSenderMessage(commandMeta.invalidSenderMessage());
+            if(meta.getRequiredSenderType().equals(Object.class)) {
+                // Setting required sender type to sender type in the method
+                // if is present. If meta has specified sender type other
+                // than object, we'll use that.
+                for(Parameter parameter : method.getParameters()) {
+                    if(commandLib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
+                        // We'll use this sender type as required.
+                        this.meta.setRequiredSenderType(parameter.getType());
+                        break;
+                    }
+                }
+            }
         }
     }
 

@@ -30,6 +30,7 @@ public abstract class CommandLib {
     public abstract void unregister(CommandEntry entry);
     public abstract void sendMessage(Object sender, String... message);
     public abstract String colorize(String message);
+    public abstract Class<?> getDefaultSenderType();
 
     public void registerAll() {
         unregisterAll();
