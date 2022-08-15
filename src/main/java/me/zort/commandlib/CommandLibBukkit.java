@@ -25,7 +25,9 @@ public class CommandLibBukkit extends CommandLib {
         boolean success = false;
         CommandMap commandMap = getCommandMap();
         if(commandMap != null) {
-            if(commandMap.getCommand(entry.getName()) != null) {
+            if(registeredCommands
+                    .stream()
+                    .anyMatch(c -> c.getName().equalsIgnoreCase(entry.getName()))) {
                 // Command is already registered.
                 return;
             }
