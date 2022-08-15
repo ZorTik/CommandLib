@@ -94,7 +94,10 @@ public class CommandEntry {
         }
         try {
             if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
-                return (boolean) method.invoke(mappingObject, invokeArgs);
+                // We're returning negated value, because boolean methods
+                // work as middleware where positive result means continuation
+                // of the process.
+                return !(boolean) method.invoke(mappingObject, invokeArgs);
             } else {
                 method.invoke(mappingObject, invokeArgs);
             }
