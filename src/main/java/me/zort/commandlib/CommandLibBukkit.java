@@ -6,17 +6,23 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class CommandLibBukkit extends CommandLib {
 
     private final List<Command> registeredCommands;
+    private final Plugin plugin;
 
-    protected CommandLibBukkit(Iterable<Object> mappingObjects) {
+    protected CommandLibBukkit(Plugin plugin, Iterable<Object> mappingObjects) {
         super(mappingObjects);
+        this.plugin = plugin;
         this.registeredCommands = new ArrayList<>();
     }
 
@@ -38,7 +44,7 @@ public class CommandLibBukkit extends CommandLib {
                     return true;
                 }
             };
-            if(commandMap.register(entry.getName(), command)) {
+            if(commandMap.register(plugin.getName(), command)) {
                 registeredCommands.add(command);
                 success = true;
             }
@@ -57,8 +63,26 @@ public class CommandLibBukkit extends CommandLib {
                     .filter(c -> c.getName().equals(entry.getName()))
                     .findFirst().ifPresent(cmd -> {
                         cmd.unregister(commandMap);
+                        unregister(cmd);
                         registeredCommands.remove(cmd);
                     });
+        }
+    }
+
+    private void unregister(Command command) {
+        CommandMap commandMap = getCommandMap();
+        try {
+            Field kcField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+            kcField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, Command> kc = (Map<String, Command>) kcField.get(commandMap);
+            String cmdName = command.getName().toLowerCase(Locale.ENGLISH).trim();
+            String fallbackPrefix = plugin.getName().toLowerCase(Locale.ENGLISH).trim();
+            // Future update: Implement aliases.
+            kc.remove(cmdName);
+            kc.remove(fallbackPrefix + ":" + cmdName);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
         }
     }
 
