@@ -20,9 +20,9 @@ public class CommandLibBukkit extends CommandLib {
     private final List<Command> registeredCommands;
     private final Plugin plugin;
 
-    protected CommandLibBukkit(Plugin plugin, Iterable<Object> mappingObjects) {
+    protected CommandLibBukkit(Object plugin, Iterable<Object> mappingObjects) {
         super(mappingObjects);
-        this.plugin = plugin;
+        this.plugin = (Plugin) plugin;
         this.registeredCommands = new ArrayList<>();
     }
 
