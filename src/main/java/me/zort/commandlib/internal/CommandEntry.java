@@ -83,13 +83,13 @@ public class CommandEntry {
             Object value = null;
             if(param.getType().equals(String.class)) {
                 value = placeholders.get(param.getName());
-                commandLib.log("Param is String: " + value);
+                commandLib.log("Param " + param.getName() + " is String: " + value);
             } else if(param.getType().equals(String[].class)) {
                 value = relativeArgs;
-                commandLib.log("Param is String[]: " + value);
+                commandLib.log("Param " + param.getName() + " is String[]: " + value);
             } else if(param.getType().isAssignableFrom(sender.getClass())) {
                 value = sender;
-                commandLib.log("Param is sender: " + value);
+                commandLib.log("Param " + param.getName() + " is sender: " + value);
             } else {
                 commandLib.log("Unsupported parameter type: " + param.getType().getName());
             }
