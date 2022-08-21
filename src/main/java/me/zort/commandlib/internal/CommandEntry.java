@@ -92,7 +92,7 @@ public class CommandEntry {
                     paramName = arg.value();
                 }
                 value = placeholders.get(paramName);
-                log("Param " + param.getName() + " is String: " + value);
+                log("Param " + paramName + " is String: " + value);
             } else if(param.getType().equals(String[].class)) {
                 value = relativeArgs;
                 log("Param " + param.getName() + " is String[]: " + value);
