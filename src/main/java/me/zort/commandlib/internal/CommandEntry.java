@@ -99,6 +99,7 @@ public class CommandEntry {
                 // of the process.
                 return !(boolean) method.invoke(mappingObject, invokeArgs);
             } else {
+                commandLib.log("Invoking command " + commandName + " with args " + ArrayUtils.toString(relativeArgs));
                 method.invoke(mappingObject, invokeArgs);
             }
             return true;
