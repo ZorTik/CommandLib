@@ -1,5 +1,6 @@
 package me.zort.commandlib;
 
+import com.google.gson.Gson;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.internal.CommandEntry;
@@ -11,6 +12,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class CommandLib {
+
+    public static final Gson GSON = new Gson();
 
     private final Iterable<Object> mappingObjects;
     private final List<CommandEntry> commands;
@@ -45,6 +48,9 @@ public abstract class CommandLib {
 
     // Command name with slash.
     protected void invoke(Object sender, String commandName, String[] args) {
+        if(!commandName.startsWith("/")) {
+            commandName = "/" + commandName;
+        }
         ArrayList<CommandEntry> commands = new ArrayList<>(this.commands);
         commands.sort(Comparator.comparingInt(e -> e.getSyntax().split(" ").length));
         boolean anySuccessful = false;

@@ -118,6 +118,11 @@ public class CommandEntry {
         if(syntax.endsWith(" {...args}")) {
             syntaxArgs = (String[]) ArrayUtils.remove(syntaxArgs, syntaxArgs.length - 1);
         }
+        if(args.length - syntaxArgs.length < 0) {
+            // Not enough arguments.
+            return null;
+        }
+
         Map<String, String> ph = new HashMap<>();
         String[] ra = new String[args.length - syntaxArgs.length];
         for(int i = 0; i < args.length; i++) {
@@ -136,6 +141,9 @@ public class CommandEntry {
                 }
             }
         }
+        commandLib.log("Parsed command: " + commandName + " with args: " + java.util.Arrays.toString(args));
+        commandLib.log("ph: " + CommandLib.GSON.toJson(ph));
+        commandLib.log("ra: " + CommandLib.GSON.toJson(ra));
         return new ParseResult(ph, ra);
     }
 
