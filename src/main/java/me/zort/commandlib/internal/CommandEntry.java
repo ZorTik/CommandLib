@@ -142,6 +142,7 @@ public class CommandEntry {
             }
         }
         commandLib.log("Parsed command: " + commandName + " with args: " + java.util.Arrays.toString(args));
+        commandLib.log("Syntax args: " + java.util.Arrays.toString(syntaxArgs));
         commandLib.log("ph: " + CommandLib.GSON.toJson(ph));
         commandLib.log("ra: " + CommandLib.GSON.toJson(ra));
         return new ParseResult(ph, ra);
