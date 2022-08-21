@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import me.zort.commandlib.CommandLib;
+import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;
 import me.zort.commandlib.util.Arrays;
@@ -82,16 +83,24 @@ public class CommandEntry {
             Parameter param = params[i];
             Object value = null;
             if(param.getType().equals(String.class)) {
-                value = placeholders.get(param.getName());
-                commandLib.log("Param " + param.getName() + " is String: " + value);
+                String paramName = param.getName();
+                if(param.isAnnotationPresent(Arg.class)) {
+                    // Parameter uses name specific declaration
+                    // {agumentName}
+                    // void method(@Arg("argumentName") String argument)
+                    Arg arg = param.getAnnotation(Arg.class);
+                    paramName = arg.value();
+                }
+                value = placeholders.get(paramName);
+                log("Param " + param.getName() + " is String: " + value);
             } else if(param.getType().equals(String[].class)) {
                 value = relativeArgs;
-                commandLib.log("Param " + param.getName() + " is String[]: " + value);
+                log("Param " + param.getName() + " is String[]: " + value);
             } else if(param.getType().isAssignableFrom(sender.getClass())) {
                 value = sender;
-                commandLib.log("Param " + param.getName() + " is sender: " + value);
+                log("Param " + param.getName() + " is sender: " + value);
             } else {
-                commandLib.log("Unsupported parameter type: " + param.getType().getName());
+                log("Unsupported parameter type: " + param.getType().getName());
             }
             invokeArgs[i] = value;
         }
@@ -146,10 +155,10 @@ public class CommandEntry {
                 }
             }
         }
-        commandLib.log("Parsed command: " + commandName + " with args: " + java.util.Arrays.toString(args));
-        commandLib.log("Syntax args: " + java.util.Arrays.toString(syntaxArgs));
-        commandLib.log("ph: " + CommandLib.GSON.toJson(ph));
-        commandLib.log("ra: " + CommandLib.GSON.toJson(ra));
+        log("Parsed command: " + commandName + " with args: " + java.util.Arrays.toString(args));
+        log("Syntax args: " + java.util.Arrays.toString(syntaxArgs));
+        log("ph: " + CommandLib.GSON.toJson(ph));
+        log("ra: " + CommandLib.GSON.toJson(ra));
         return new ParseResult(ph, ra);
     }
 
@@ -180,6 +189,10 @@ public class CommandEntry {
 
     public boolean matchesName(String name) {
         return getName().equalsIgnoreCase(name.replaceAll("/", ""));
+    }
+
+    private void log(String s) {
+        commandLib.log(s);
     }
 
     @AllArgsConstructor
