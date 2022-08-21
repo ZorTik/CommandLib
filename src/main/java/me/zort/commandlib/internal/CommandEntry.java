@@ -93,6 +93,7 @@ public class CommandEntry {
             invokeArgs[i] = value;
         }
         try {
+            commandLib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
             if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
                 // We're returning negated value, because boolean methods
                 // work as middleware where positive result means continuation
