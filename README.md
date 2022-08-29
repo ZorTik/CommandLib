@@ -20,12 +20,12 @@ public class KillCommandHandlers {
     }
 
     @Command("/kill {nickname}")
-    public void kill(Player sender, String nickname) {
+    public void kill(Player sender, @Arg("nickname") String nickname) {
         System.out.println("Killing " + nickname);
     }
 
     @Command("/kill {nickname} {...args}")
-    public void killWithReason(Player sender, String nickname, String[] relativeArgs) {
+    public void killWithReason(Player sender, @Arg("nickname") String nickname, String[] relativeArgs) {
         System.out.println("Killing " + nickname + " with reason: " + String.join(" ", relativeArgs));
     }
 
