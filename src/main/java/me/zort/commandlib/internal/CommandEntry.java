@@ -23,6 +23,7 @@ public class CommandEntry {
     private final CommandEntryMeta meta;
 
     private final CommandLib commandLib;
+    @Getter
     private final Object mappingObject;
     private final Method method;
     private final Command annot;
@@ -122,11 +123,25 @@ public class CommandEntry {
         }
     }
 
-    private ParseResult parse(String commandName, String[] args) {
+    public boolean passes(String commandName, String[] args) {
         String syntax = getSyntax();
-        String[] syntaxArgs = (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+        String[] syntaxArgs = getSyntaxArgs();
         if(!matchesName(commandName) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
             // Provided is not this command.
+            return false;
+        }
+        return true;
+    }
+
+    private String[] getSyntaxArgs() {
+        String syntax = getSyntax();
+        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+    }
+
+    private ParseResult parse(String commandName, String[] args) {
+        String syntax = getSyntax();
+        String[] syntaxArgs = getSyntaxArgs();
+        if(!passes(commandName, args)) {
             return null;
         }
         if(syntax.endsWith(" {...args}")) {

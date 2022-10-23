@@ -3,10 +3,7 @@ package me.zort.commandlib;
 import me.zort.commandlib.internal.CommandEntry;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandMap;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.command.*;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Field;
@@ -42,6 +39,18 @@ public class CommandLibBukkit extends CommandLib {
                 public boolean execute(CommandSender commandSender, String label, String[] args) {
                     invoke(commandSender, "/" + entry.getName(), args);
                     return true;
+                }
+
+                @Override
+                public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+                    Object mappingObject = entry.getMappingObject();
+                    List<String> tabCompletions;
+                    if(mappingObject instanceof TabCompleter
+                            && (tabCompletions = ((TabCompleter) mappingObject).onTabComplete(sender, this, alias, args)) != null) {
+                        return tabCompletions;
+                    } else {
+                        return super.tabComplete(sender, alias, args);
+                    }
                 }
             };
             if(commandMap.register(plugin.getName(), command)) {

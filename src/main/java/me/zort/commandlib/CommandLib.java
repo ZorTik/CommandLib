@@ -53,8 +53,9 @@ public abstract class CommandLib {
         }
         ArrayList<CommandEntry> commands = new ArrayList<>(this.commands);
         commands.sort(Comparator.comparingInt(e -> e.getSyntax().split(" ").length));
+        ArrayList<CommandEntry> iterCommands = new ArrayList<>(this.commands);
         boolean anySuccessful = false;
-        for(CommandEntry entry : this.commands) {
+        for(CommandEntry entry : iterCommands) {
             if(entry.isErrorHandler()) {
                 continue;
             }
@@ -67,7 +68,7 @@ public abstract class CommandLib {
             }
         }
         if(!anySuccessful) {
-            for(CommandEntry command : this.commands) {
+            for(CommandEntry command : iterCommands) {
                 if(command.isErrorHandler()) {
                     try {
                         command.invokeConditionally(sender, commandName, args);
