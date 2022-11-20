@@ -143,6 +143,9 @@ public class CommandEntry {
             return Collections.emptyList();
         }
         String arg = mappingArgs[argIndex];
+        if(arg.equals("{...args}")) {
+            return Collections.emptyList();
+        }
         // TODO: Future update - Handling suggestions for placeholders.
         return Collections.singletonList(arg);
     }
