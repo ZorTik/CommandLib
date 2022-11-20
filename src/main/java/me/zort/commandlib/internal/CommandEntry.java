@@ -140,7 +140,7 @@ public class CommandEntry {
         if(mappingArgs[0].startsWith("/"))
             mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
         String arg;
-        if(argIndex >= mappingArgs.length || isPlaceholderArg(arg = mappingArgs[argIndex])) {
+        if(argIndex < 0 || argIndex >= mappingArgs.length || isPlaceholderArg(arg = mappingArgs[argIndex])) {
             return Collections.emptyList();
         }
         // TODO: Future update - Handling suggestions for placeholders.
