@@ -14,7 +14,9 @@ import org.apache.commons.lang.ArrayUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CommandEntry {
@@ -133,9 +135,25 @@ public class CommandEntry {
         return true;
     }
 
+    public List<String> getSuggestions(int argIndex) {
+        String[] mappingArgs = annot.value().split(" ");
+        if(mappingArgs[0].startsWith("/"))
+            mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
+        String arg;
+        if(argIndex >= mappingArgs.length || isPlaceholderArg(arg = mappingArgs[argIndex])) {
+            return Collections.emptyList();
+        }
+        // TODO: Future update - Handling suggestions for placeholders.
+        return Collections.singletonList(arg);
+    }
+
     private String[] getSyntaxArgs() {
         String syntax = getSyntax();
         return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+    }
+
+    private boolean isPlaceholderArg(String arg) {
+        return arg.startsWith("{") && arg.endsWith("}");
     }
 
     private ParseResult parse(String commandName, String[] args) {

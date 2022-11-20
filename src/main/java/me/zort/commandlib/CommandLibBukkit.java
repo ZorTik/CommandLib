@@ -1,6 +1,7 @@
 package me.zort.commandlib;
 
 import me.zort.commandlib.internal.CommandEntry;
+import me.zort.commandlib.internal.CommandEntryMeta;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CommandLibBukkit extends CommandLib {
 
@@ -34,7 +36,8 @@ public class CommandLibBukkit extends CommandLib {
                 // Command is already registered.
                 return;
             }
-            Command command = new Command(entry.getName(), entry.getMeta().getDescription(), entry.getMeta().getUsage(), new ArrayList<>()) {
+            CommandEntryMeta meta = entry.getMeta();
+            Command command = new Command(entry.getName(), meta.getDescription(), meta.getUsage(), new ArrayList<>()) {
                 @Override
                 public boolean execute(CommandSender commandSender, String label, String[] args) {
                     invoke(commandSender, "/" + entry.getName(), args);
@@ -44,8 +47,10 @@ public class CommandLibBukkit extends CommandLib {
                 @Override
                 public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
                     Object mappingObject = entry.getMappingObject();
-                    List<String> tabCompletions;
-                    if(mappingObject instanceof TabCompleter
+                    List<String> tabCompletions = completeSubcommands(entry.getName(), args);
+                    if (!tabCompletions.isEmpty()) {
+                        return tabCompletions;
+                    } else if (mappingObject instanceof TabCompleter
                             && (tabCompletions = ((TabCompleter) mappingObject).onTabComplete(sender, this, alias, args)) != null) {
                         return tabCompletions;
                     } else {
@@ -61,6 +66,14 @@ public class CommandLibBukkit extends CommandLib {
         if(!success) {
             log("Failed to register command: " + entry.getName());
         }
+    }
+
+    private List<String> completeSubcommands(String commandName, String[] args) {
+        return getCommands()
+                .stream()
+                .filter(entry -> entry.matchesName(commandName))
+                .flatMap(entry -> entry.getSuggestions(args.length - 1).stream())
+                .collect(Collectors.toList());
     }
 
     @Override

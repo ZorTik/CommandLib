@@ -1,6 +1,8 @@
 package me.zort.commandlib;
 
 import com.google.gson.Gson;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.internal.CommandEntry;
@@ -16,6 +18,7 @@ public abstract class CommandLib {
     public static final Gson GSON = new Gson();
 
     private final Iterable<Object> mappingObjects;
+    @Getter(AccessLevel.PROTECTED)
     private final List<CommandEntry> commands;
 
     @Setter
