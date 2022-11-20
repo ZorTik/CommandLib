@@ -72,7 +72,7 @@ public class CommandLibBukkit extends CommandLib {
         return getCommands()
                 .stream()
                 .filter(entry -> entry.matchesName(commandName))
-                .flatMap(entry -> entry.getSuggestions(args.length - 1).stream())
+                .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
                 .collect(Collectors.toList());
     }
 

@@ -135,11 +135,12 @@ public class CommandEntry {
         return true;
     }
 
-    public List<String> getSuggestions(int argIndex) {
+    public List<String> getSuggestions(String commandName, String[] args) {
+        int argIndex = args.length - 1;
         String[] mappingArgs = annot.value().split(" ");
         if(mappingArgs[0].startsWith("/"))
             mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-        if(argIndex < 0 || argIndex >= mappingArgs.length) {
+        if(argIndex < 0 || argIndex >= mappingArgs.length || parse(commandName, args) == null) {
             return Collections.emptyList();
         }
         String arg = mappingArgs[argIndex];
@@ -160,6 +161,10 @@ public class CommandEntry {
     }
 
     private ParseResult parse(String commandName, String[] args) {
+        return parse(commandName, args, true);
+    }
+
+    private ParseResult parse(String commandName, String[] args, boolean debug) {
         String syntax = getSyntax();
         String[] syntaxArgs = getSyntaxArgs();
         if(!passes(commandName, args)) {
@@ -191,10 +196,12 @@ public class CommandEntry {
                 }
             }
         }
-        log("Parsed command: " + commandName + " with args: " + java.util.Arrays.toString(args));
-        log("Syntax args: " + java.util.Arrays.toString(syntaxArgs));
-        log("ph: " + CommandLib.GSON.toJson(ph));
-        log("ra: " + CommandLib.GSON.toJson(ra));
+        if(debug) {
+            log("Parsed command: " + commandName + " with args: " + java.util.Arrays.toString(args));
+            log("Syntax args: " + java.util.Arrays.toString(syntaxArgs));
+            log("ph: " + CommandLib.GSON.toJson(ph));
+            log("ra: " + CommandLib.GSON.toJson(ra));
+        }
         return new ParseResult(ph, ra);
     }
 
