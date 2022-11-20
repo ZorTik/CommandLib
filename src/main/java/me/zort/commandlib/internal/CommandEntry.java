@@ -139,10 +139,10 @@ public class CommandEntry {
         String[] mappingArgs = annot.value().split(" ");
         if(mappingArgs[0].startsWith("/"))
             mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-        String arg;
-        if(argIndex < 0 || argIndex >= mappingArgs.length || isPlaceholderArg(arg = mappingArgs[argIndex])) {
+        if(argIndex < 0 || argIndex >= mappingArgs.length) {
             return Collections.emptyList();
         }
+        String arg = mappingArgs[argIndex];
         // TODO: Future update - Handling suggestions for placeholders.
         return Collections.singletonList(arg);
     }

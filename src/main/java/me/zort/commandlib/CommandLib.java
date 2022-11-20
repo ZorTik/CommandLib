@@ -84,9 +84,7 @@ public abstract class CommandLib {
     }
 
     public void log(String message) {
-        if(debug) {
-            System.out.println(message);
-        }
+        if(debug) System.out.println(message);
     }
 
     private void loadMappingObject(Object obj) {
