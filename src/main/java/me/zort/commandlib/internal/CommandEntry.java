@@ -135,19 +135,40 @@ public class CommandEntry {
         return true;
     }
 
+    public boolean matches(String commandName, String[] args) {
+        String[] syntaxArgs = getSyntaxArgs();
+        if(!matchesName(commandName) || (syntaxArgs.length > args.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+            return false;
+        }
+        for(int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if(i >= syntaxArgs.length && (syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+                // We're in the last argument and it's a varargs.
+                return true;
+            } else if(i >= syntaxArgs.length) {
+                return false;
+            } else if(isPlaceholderArg(syntaxArgs[i])) {
+                return true;
+            }
+            if(!syntaxArgs[i].equals(arg)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public List<String> getSuggestions(String commandName, String[] args) {
         int argIndex = args.length - 1;
         String[] mappingArgs = annot.value().split(" ");
         if(mappingArgs[0].startsWith("/"))
             mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-        if(argIndex < 0 || argIndex >= mappingArgs.length || parse(commandName, args) == null) {
+        if(argIndex < 0 || argIndex >= mappingArgs.length || !matches(commandName, args)) {
             return Collections.emptyList();
         }
         String arg = mappingArgs[argIndex];
         if(arg.equals("{...args}")) {
             return Collections.emptyList();
         }
-        // TODO: Future update - Handling suggestions for placeholders.
         return Collections.singletonList(arg);
     }
 
