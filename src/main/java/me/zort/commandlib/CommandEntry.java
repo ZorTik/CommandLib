@@ -140,7 +140,7 @@ public class CommandEntry {
             String arg = args[i];
             if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
                 // We're in the last argument and it's a varargs.
-                continue;
+                return true;
             } else if(i >= syntaxArgs.length) {
                 return false;
             } else if(isPlaceholderArg(syntaxArgs[i])) {
