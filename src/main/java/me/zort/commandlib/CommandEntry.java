@@ -131,7 +131,7 @@ public class CommandEntry {
         return true;
     }
 
-    public boolean matches(String commandName, String[] args) {
+    public boolean matchesForSuggestion(String commandName, String[] args) {
         String[] syntaxArgs = getSyntaxArgs();
         if(!matchesName(commandName) || (syntaxArgs.length > args.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
             return false;
@@ -146,7 +146,7 @@ public class CommandEntry {
             } else if(isPlaceholderArg(syntaxArgs[i])) {
                 return true;
             }
-            if(!syntaxArgs[i].equals(arg)) {
+            if(!syntaxArgs[i].startsWith(arg)) {
                 return false;
             }
         }
@@ -155,7 +155,7 @@ public class CommandEntry {
 
     private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
         String[] extended = (String[]) ArrayUtils.add(args, "");
-        if(matches(commandName, args)) {
+        if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
             if(mappingArgs[0].startsWith("/"))
@@ -164,7 +164,7 @@ public class CommandEntry {
             if(!arg.equals("{...args}")) {
                 return Optional.of(arg);
             }
-        } else if(matches(commandName, extended)) {
+        } else if(matchesForSuggestion(commandName, extended)) {
             return obtainSuggestionMatch(commandName, extended);
         }
         return Optional.empty();
