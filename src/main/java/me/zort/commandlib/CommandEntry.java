@@ -133,12 +133,12 @@ public class CommandEntry {
 
     public boolean matchesForSuggestion(String commandName, String[] args) {
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || (syntaxArgs.length > args.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+        if(!matchesName(commandName) || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
             return false;
         }
         for(int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if(i >= syntaxArgs.length && (syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+            if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
                 // We're in the last argument and it's a varargs.
                 return true;
             } else if(i >= syntaxArgs.length) {
