@@ -146,7 +146,8 @@ public class CommandEntry {
             } else if(isPlaceholderArg(syntaxArgs[i])) {
                 return true;
             }
-            if(!syntaxArgs[i].startsWith(arg)) {
+            boolean last = i == args.length - 1;
+            if((last && !syntaxArgs[i].startsWith(arg)) || (!last && !syntaxArgs[i].equals(arg))) {
                 return false;
             }
         }
