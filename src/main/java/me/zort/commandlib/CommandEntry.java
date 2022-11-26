@@ -1,10 +1,9 @@
-package me.zort.commandlib.internal;
+package me.zort.commandlib;
 
 import com.google.common.primitives.Primitives;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
-import me.zort.commandlib.CommandLib;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;

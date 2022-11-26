@@ -1,7 +1,5 @@
 package me.zort.commandlib;
 
-import me.zort.commandlib.internal.CommandEntry;
-import me.zort.commandlib.internal.CommandEntryMeta;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
