@@ -13,10 +13,7 @@ import org.apache.commons.lang.ArrayUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CommandEntry {
 
@@ -156,19 +153,25 @@ public class CommandEntry {
         return true;
     }
 
+    private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
+        String[] extended = (String[]) ArrayUtils.add(args, "");
+        if(matches(commandName, args)) {
+            int argIndex = args.length - 1;
+            String[] mappingArgs = annot.value().split(" ");
+            if(mappingArgs[0].startsWith("/"))
+                mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
+            String arg = mappingArgs[argIndex];
+            if(!arg.equals("{...args}")) {
+                return Optional.of(arg);
+            }
+        } else if(matches(commandName, extended)) {
+            return obtainSuggestionMatch(commandName, extended);
+        }
+        return Optional.empty();
+    }
+
     public List<String> getSuggestions(String commandName, String[] args) {
-        int argIndex = args.length - 1;
-        String[] mappingArgs = annot.value().split(" ");
-        if(mappingArgs[0].startsWith("/"))
-            mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-        if(argIndex < 0 || argIndex >= mappingArgs.length || !matches(commandName, args)) {
-            return Collections.emptyList();
-        }
-        String arg = mappingArgs[argIndex];
-        if(arg.equals("{...args}")) {
-            return Collections.emptyList();
-        }
-        return Collections.singletonList(arg);
+        return obtainSuggestionMatch(commandName, args).map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
     private String[] getSyntaxArgs() {
