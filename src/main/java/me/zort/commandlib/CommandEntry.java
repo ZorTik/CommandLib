@@ -1,10 +1,9 @@
-package me.zort.commandlib.internal;
+package me.zort.commandlib;
 
 import com.google.common.primitives.Primitives;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
-import me.zort.commandlib.CommandLib;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;
@@ -14,10 +13,7 @@ import org.apache.commons.lang.ArrayUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CommandEntry {
 
@@ -135,41 +131,48 @@ public class CommandEntry {
         return true;
     }
 
-    public boolean matches(String commandName, String[] args) {
+    public boolean matchesForSuggestion(String commandName, String[] args) {
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || (syntaxArgs.length > args.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+        if(!matchesName(commandName) || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
             return false;
         }
         for(int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if(i >= syntaxArgs.length && (syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+            if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
                 // We're in the last argument and it's a varargs.
                 return true;
             } else if(i >= syntaxArgs.length) {
                 return false;
             } else if(isPlaceholderArg(syntaxArgs[i])) {
-                return true;
+                continue;
             }
-            if(!syntaxArgs[i].equals(arg)) {
+            boolean last = i >= args.length - 1;
+            if((last && !syntaxArgs[i].startsWith(arg)) || (!last && !syntaxArgs[i].equals(arg))) {
                 return false;
             }
         }
         return true;
     }
 
+    private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
+        //String[] extended = (String[]) ArrayUtils.add(args, "");
+        if(matchesForSuggestion(commandName, args)) {
+            int argIndex = args.length - 1;
+            String[] mappingArgs = annot.value().split(" ");
+            if(mappingArgs[0].startsWith("/"))
+                mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
+            String arg = mappingArgs[argIndex];
+            if(!arg.equals("{...args}")) {
+                return Optional.of(arg);
+            }
+        }/* else if(matchesForSuggestion(commandName, extended)) {
+            return obtainSuggestionMatch(commandName, extended);
+        }*/
+        return Optional.empty();
+    }
+
     public List<String> getSuggestions(String commandName, String[] args) {
-        int argIndex = args.length - 1;
-        String[] mappingArgs = annot.value().split(" ");
-        if(mappingArgs[0].startsWith("/"))
-            mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-        if(argIndex < 0 || argIndex >= mappingArgs.length || !matches(commandName, args)) {
-            return Collections.emptyList();
-        }
-        String arg = mappingArgs[argIndex];
-        if(arg.equals("{...args}")) {
-            return Collections.emptyList();
-        }
-        return Collections.singletonList(arg);
+        return obtainSuggestionMatch(commandName, args).map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
     private String[] getSyntaxArgs() {

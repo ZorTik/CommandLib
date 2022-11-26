@@ -1,4 +1,4 @@
-package me.zort.commandlib.internal;
+package me.zort.commandlib;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

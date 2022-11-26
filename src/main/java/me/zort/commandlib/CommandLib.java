@@ -5,13 +5,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
-import me.zort.commandlib.internal.CommandEntry;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 public abstract class CommandLib {
 
@@ -54,12 +54,18 @@ public abstract class CommandLib {
         if(!commandName.startsWith("/")) {
             commandName = "/" + commandName;
         }
+        if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
+            doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
+        }
+    }
+
+    private boolean doInvokeIf(Object sender, String commandName, String[] args, Predicate<CommandEntry> pred) {
         ArrayList<CommandEntry> commands = new ArrayList<>(this.commands);
         commands.sort(Comparator.comparingInt(e -> e.getSyntax().split(" ").length));
-        ArrayList<CommandEntry> iterCommands = new ArrayList<>(this.commands);
+        ArrayList<CommandEntry> iterCommands = new ArrayList<>(commands);
         boolean anySuccessful = false;
-        for(CommandEntry entry : iterCommands) {
-            if(entry.isErrorHandler()) {
+        for (CommandEntry entry : iterCommands) {
+            if(!pred.test(entry)) {
                 continue;
             }
             try {
@@ -70,17 +76,7 @@ public abstract class CommandLib {
                 e.printStackTrace();
             }
         }
-        if(!anySuccessful) {
-            for(CommandEntry command : iterCommands) {
-                if(command.isErrorHandler()) {
-                    try {
-                        command.invokeConditionally(sender, commandName, args);
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
+        return anySuccessful;
     }
 
     public void log(String message) {
