@@ -175,12 +175,33 @@ public class CommandEntry {
         return obtainSuggestionMatch(commandName, args).map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
+    public String buildUsage() {
+        String[] syntaxArgs = getSyntaxArgs();
+        String[] usageArgs = new String[syntaxArgs.length];
+
+        for(int i = 0; i < syntaxArgs.length; i++) {
+            usageArgs[i] = prepareUsageArg(syntaxArgs[i]);
+        }
+
+        return usageArgs.length > 0
+                ? "/" + getName() + " " + String.join(" ", usageArgs)
+                : "/" + getName();
+    }
+
+    private String prepareUsageArg(String arg) {
+        if(isPlaceholderArg(arg)) {
+            String name = arg.substring(1, arg.length() - 1);
+            arg = "(" + NamingStrategy.javaToHumanConst(name) + ")";
+        }
+        return arg;
+    }
+
     private String[] getSyntaxArgs() {
         String syntax = getSyntax();
         return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
     }
 
-    private boolean isPlaceholderArg(String arg) {
+    public static boolean isPlaceholderArg(String arg) {
         return arg.startsWith("{") && arg.endsWith("}");
     }
 
