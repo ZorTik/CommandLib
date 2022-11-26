@@ -140,13 +140,13 @@ public class CommandEntry {
             String arg = args[i];
             if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
                 // We're in the last argument and it's a varargs.
-                return true;
+                continue;
             } else if(i >= syntaxArgs.length) {
                 return false;
             } else if(isPlaceholderArg(syntaxArgs[i])) {
-                return true;
+                continue;
             }
-            boolean last = i == args.length - 1;
+            boolean last = i >= syntaxArgs.length - 1;
             if((last && !syntaxArgs[i].startsWith(arg)) || (!last && !syntaxArgs[i].equals(arg))) {
                 return false;
             }
