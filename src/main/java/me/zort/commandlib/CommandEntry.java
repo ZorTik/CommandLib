@@ -8,6 +8,7 @@ import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;
 import me.zort.commandlib.util.Arrays;
+import me.zort.commandlib.util.NamingStrategy;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -175,12 +176,32 @@ public class CommandEntry {
         return obtainSuggestionMatch(commandName, args).map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
-    private String[] getSyntaxArgs() {
-        String syntax = getSyntax();
-        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+    public String buildUsage() {
+        String[] syntaxArgs = getSyntaxArgs();
+        String[] usageArgs = new String[syntaxArgs.length];
+
+        for(int i = 0; i < syntaxArgs.length; i++) {
+            usageArgs[i] = prepareUsageArg(syntaxArgs[i]);
+        }
+
+        return usageArgs.length > 0
+                ? "/" + getName() + " " + String.join(" ", usageArgs)
+                : "/" + getName();
     }
 
-    private boolean isPlaceholderArg(String arg) {
+    private String prepareUsageArg(String arg) {
+        if(isPlaceholderArg(arg)) {
+            String name = arg.substring(1, arg.length() - 1);
+            arg = "(" + NamingStrategy.javaToHumanConst(name) + ")";
+        }
+        return arg;
+    }
+
+    public boolean isEligibleForUsage() {
+        return !isErrorHandler() && !isMiddleware();
+    }
+
+    public static boolean isPlaceholderArg(String arg) {
         return arg.startsWith("{") && arg.endsWith("}");
     }
 
@@ -250,8 +271,17 @@ public class CommandEntry {
         return syntax;
     }
 
+    public String[] getSyntaxArgs() {
+        String syntax = getSyntax();
+        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+    }
+
     public boolean isErrorHandler() {
         return annot.unknown();
+    }
+
+    public boolean isMiddleware() {
+        return Primitives.wrap(method.getReturnType()).equals(Boolean.class);
     }
 
     public boolean matchesName(String name) {

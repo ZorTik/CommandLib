@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
+import me.zort.commandlib.annotation.Usage;
+import me.zort.commandlib.util.CommandUtil;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ public abstract class CommandLib {
     private final Iterable<Object> mappingObjects;
     @Getter(AccessLevel.PROTECTED)
     private final List<CommandEntry> commands;
+    private final UsagePrinterManager usagePrinterManager;
 
     @Setter
     private boolean debug = false;
@@ -27,6 +30,7 @@ public abstract class CommandLib {
     protected CommandLib(Iterable<Object> mappingObjects) {
         this.mappingObjects = mappingObjects;
         this.commands = Collections.synchronizedList(new ArrayList<>());
+        this.usagePrinterManager = new UsagePrinterManager(commands);
     }
 
     // Implementations should implement that commands
@@ -50,13 +54,21 @@ public abstract class CommandLib {
     }
 
     // Command name with slash.
+    @SuppressWarnings("unchecked")
     protected void invoke(Object sender, String commandName, String[] args) {
         if(!commandName.startsWith("/")) {
             commandName = "/" + commandName;
         }
+
+        boolean nonExistent = false;
+
         if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
             doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
+
+            nonExistent = true;
         }
+
+        usagePrinterManager.invokeLoggerFor(sender, commandName, args, nonExistent);
     }
 
     private boolean doInvokeIf(Object sender, String commandName, String[] args, Predicate<CommandEntry> pred) {
@@ -65,9 +77,7 @@ public abstract class CommandLib {
         ArrayList<CommandEntry> iterCommands = new ArrayList<>(commands);
         boolean anySuccessful = false;
         for (CommandEntry entry : iterCommands) {
-            if(!pred.test(entry)) {
-                continue;
-            }
+            if(!pred.test(entry)) continue;
             try {
                 if(entry.invokeConditionally(sender, commandName, args)) {
                     anySuccessful = true;
@@ -88,6 +98,18 @@ public abstract class CommandLib {
         for(Method method : clazz.getDeclaredMethods()) {
             if(method.isAnnotationPresent(Command.class)) {
                 commands.add(new CommandEntry(this, obj, method));
+
+                Command commandAnnot = method.getDeclaredAnnotation(Command.class);
+                if(clazz.isAnnotationPresent(Usage.class) && !commandAnnot.unknown()) {
+                    Usage usage = clazz.getDeclaredAnnotation(Usage.class);
+                    String commandName = CommandUtil.parseCommandName(commandAnnot.value());
+
+                    if(commandName != null) {
+                        usagePrinterManager.registerUsageLogging(usage, commandName);
+                    }
+
+                }
+
             }
         }
     }
