@@ -196,6 +196,10 @@ public class CommandEntry {
         }
         return arg;
     }
+    
+    public boolean isEligibleForUsage() {
+        return !isErrorHandler() && !isMiddleware();
+    }
 
     private String[] getSyntaxArgs() {
         String syntax = getSyntax();
@@ -274,6 +278,10 @@ public class CommandEntry {
 
     public boolean isErrorHandler() {
         return annot.unknown();
+    }
+
+    public boolean isMiddleware() {
+        return Primitives.wrap(method.getReturnType()).equals(Boolean.class);
     }
 
     public boolean matchesName(String name) {

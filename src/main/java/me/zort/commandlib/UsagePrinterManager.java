@@ -36,6 +36,7 @@ public class UsagePrinterManager {
             usagePrinter.print(sender, parsedCommandName, args, entryStorage
                     .stream()
                     .filter(e -> e.matchesName(atomicCommandName.get()))
+                    .filter(CommandEntry::isEligibleForUsage)
                     .map(CommandEntry::buildUsage)
                     .collect(Collectors.toList()));
         }
