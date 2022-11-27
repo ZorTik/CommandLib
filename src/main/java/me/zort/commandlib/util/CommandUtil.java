@@ -1,6 +1,7 @@
-package me.zort.commandlib;
+package me.zort.commandlib.util;
 
 import lombok.experimental.UtilityClass;
+import me.zort.commandlib.CommandEntry;
 
 import javax.annotation.Nullable;
 

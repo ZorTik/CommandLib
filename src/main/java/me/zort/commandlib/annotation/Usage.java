@@ -18,6 +18,14 @@ public @interface Usage {
      * <p></p>
      * If this value is empty, usages are shown
      * on every bad invocation.
+     * <p></p>
+     * Example:
+     * <pre>
+     * &#064;Usage(printer = CustomPrinter.class, invokeArgs = "help")
+     * public class CustomMappingObject {
+     *      // Command annotations.
+     * }
+     * </pre>
      *
      * @return The syntax.
      */

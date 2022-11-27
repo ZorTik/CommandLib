@@ -1,4 +1,4 @@
-package me.zort.commandlib;
+package me.zort.commandlib.util;
 
 import org.apache.commons.lang.ArrayUtils;
 

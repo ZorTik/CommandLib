@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.Usage;
+import me.zort.commandlib.util.CommandUtil;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;

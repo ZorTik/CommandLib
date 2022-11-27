@@ -8,6 +8,7 @@ import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;
 import me.zort.commandlib.util.Arrays;
+import me.zort.commandlib.util.NamingStrategy;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;

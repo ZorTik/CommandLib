@@ -3,6 +3,7 @@ package me.zort.commandlib;
 import com.google.common.collect.Maps;
 import lombok.RequiredArgsConstructor;
 import me.zort.commandlib.annotation.Usage;
+import me.zort.commandlib.util.CommandUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
