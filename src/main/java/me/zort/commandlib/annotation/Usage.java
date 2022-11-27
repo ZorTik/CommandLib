@@ -23,7 +23,10 @@ public @interface Usage {
      * <pre>
      * &#064;Usage(printer = CustomPrinter.class, invokeArgs = "help")
      * public class CustomMappingObject {
-     *      // Command annotations.
+     *     &#064;Command(value = "/anycommand {...args}", unknown = true)
+     *     public void unknown(CommandSender sender) {
+     *         sender.sendMessage("Use /anycommand help for help");
+     *     }
      * }
      * </pre>
      *
