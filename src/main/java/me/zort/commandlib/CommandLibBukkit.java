@@ -108,10 +108,9 @@ public class CommandLibBukkit extends CommandLib {
 
     @Override
     public void sendMessage(Object sender, String... message) {
-        if(!(sender instanceof CommandSender)) {
-            return;
+        if(sender instanceof CommandSender) {
+            ((CommandSender) sender).sendMessage(message);
         }
-        ((CommandSender) sender).sendMessage(message);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package me.zort.commandlib.annotation;
 
-import me.zort.commandlib.UsageLogger;
+import me.zort.commandlib.UsagePrinter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -14,7 +14,7 @@ public @interface Usage {
     /**
      * Args syntax to invoke usage on.
      * If invoked with args syntax present here,
-     * usages are printed using {@link UsageLogger}.
+     * usages are printed using {@link UsagePrinter}.
      * <p></p>
      * If this value is empty, usages are shown
      * on every bad invocation.
@@ -24,9 +24,9 @@ public @interface Usage {
     String invokeArgs() default "";
 
     /**
-     * Sets a logger to use for this mapping class.
-     * @return The logger.
+     * Sets a printer to use for this mapping class.
+     * @return The printer.
      */
-    Class<? extends UsageLogger> logger();
+    Class<? extends UsagePrinter> printer();
 
 }

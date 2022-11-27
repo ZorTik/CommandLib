@@ -2,7 +2,7 @@ package me.zort.commandlib;
 
 import java.util.List;
 
-public interface UsageLogger<S> {
+public interface UsagePrinter<S> {
 
     /**
      * Prints formatted usages to the user.

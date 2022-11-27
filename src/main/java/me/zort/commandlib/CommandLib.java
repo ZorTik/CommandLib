@@ -21,7 +21,7 @@ public abstract class CommandLib {
     private final Iterable<Object> mappingObjects;
     @Getter(AccessLevel.PROTECTED)
     private final List<CommandEntry> commands;
-    private final UsageLoggerManager usageLoggerManager;
+    private final UsagePrinterManager usagePrinterManager;
 
     @Setter
     private boolean debug = false;
@@ -29,7 +29,7 @@ public abstract class CommandLib {
     protected CommandLib(Iterable<Object> mappingObjects) {
         this.mappingObjects = mappingObjects;
         this.commands = Collections.synchronizedList(new ArrayList<>());
-        this.usageLoggerManager = new UsageLoggerManager(commands);
+        this.usagePrinterManager = new UsagePrinterManager(commands);
     }
 
     // Implementations should implement that commands
@@ -67,7 +67,7 @@ public abstract class CommandLib {
             nonExistent = true;
         }
 
-        usageLoggerManager.invokeLoggerFor(sender, commandName, args, nonExistent);
+        usagePrinterManager.invokeLoggerFor(sender, commandName, args, nonExistent);
     }
 
     private boolean doInvokeIf(Object sender, String commandName, String[] args, Predicate<CommandEntry> pred) {
@@ -104,7 +104,7 @@ public abstract class CommandLib {
                     String commandName = CommandUtil.parseCommandName(commandAnnot.value());
 
                     if(commandName != null) {
-                        usageLoggerManager.registerUsageLogging(usage, commandName);
+                        usagePrinterManager.registerUsageLogging(usage, commandName);
                     }
 
                 }
