@@ -26,8 +26,13 @@ public class UsagePrinterManager {
         UsagePrinter usagePrinter = usageLoggers.get(parsedCommandName);
         if(usagePrinter == null) return;
 
+        boolean matchesUsageArgs = CommandUtil.matchesArgs(String.join(" ", args), usageAnnots.get(parsedCommandName).invokeArgs());
+
+        if(matchesUsageArgs)
+            nonExistent = false;
+
         if(nonExistent == canInvokeNonExistent(parsedCommandName)
-        && (canInvokeNonExistent(parsedCommandName) || CommandUtil.matchesArgs(String.join(" ", args), usageAnnots.get(parsedCommandName).invokeArgs()))) {
+        && (canInvokeNonExistent(parsedCommandName) || matchesUsageArgs)) {
             usagePrinter.print(sender, parsedCommandName, args, entryStorage
                     .stream()
                     .filter(e -> e.matchesName(atomicCommandName.get()))
