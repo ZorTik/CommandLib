@@ -6,6 +6,7 @@ import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.util.CommandUtil;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,6 +38,7 @@ public class UsagePrinterManager {
                     .stream()
                     .filter(e -> e.matchesName(atomicCommandName.get()))
                     .filter(CommandEntry::isEligibleForUsage)
+                    .sorted(Comparator.comparingInt(e -> e.getSyntaxArgs().length))
                     .map(CommandEntry::buildUsage)
                     .collect(Collectors.toList()));
         }

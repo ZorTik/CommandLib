@@ -196,14 +196,9 @@ public class CommandEntry {
         }
         return arg;
     }
-    
+
     public boolean isEligibleForUsage() {
         return !isErrorHandler() && !isMiddleware();
-    }
-
-    private String[] getSyntaxArgs() {
-        String syntax = getSyntax();
-        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
     }
 
     public static boolean isPlaceholderArg(String arg) {
@@ -274,6 +269,11 @@ public class CommandEntry {
             syntax += " {...args}";
         }
         return syntax;
+    }
+
+    public String[] getSyntaxArgs() {
+        String syntax = getSyntax();
+        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
     }
 
     public boolean isErrorHandler() {
