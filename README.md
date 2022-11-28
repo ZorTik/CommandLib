@@ -1,6 +1,5 @@
 # CommandLib
 Flexible library for Bukkit &amp; BungeeCord commands. Uses simple command registering and handling syntax with automatic command registration!
-> This library can work either with Bukkit or BungeeCord!
 
 ### Example:
 ```
