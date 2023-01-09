@@ -22,6 +22,7 @@ public abstract class CommandLib {
     private final Iterable<Object> mappingObjects;
     @Getter(AccessLevel.PROTECTED)
     private final List<CommandEntry> commands;
+    @Getter(AccessLevel.PROTECTED)
     private final UsagePrinterManager usagePrinterManager;
 
     @Setter
