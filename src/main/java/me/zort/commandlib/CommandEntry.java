@@ -9,6 +9,7 @@ import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandMeta;
 import me.zort.commandlib.util.Arrays;
 import me.zort.commandlib.util.NamingStrategy;
+import me.zort.commandlib.util.PrimitiveParser;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -82,17 +83,23 @@ public class CommandEntry {
         for(int i = 0; i < params.length; i++) {
             Parameter param = params[i];
             Object value = null;
-            if(param.getType().equals(String.class)) {
-                String paramName = param.getName();
-                if(param.isAnnotationPresent(Arg.class)) {
-                    // Parameter uses name specific declaration
-                    // {agumentName}
-                    // void method(@Arg("argumentName") String argument)
-                    Arg arg = param.getAnnotation(Arg.class);
-                    paramName = arg.value();
-                }
+            if(param.isAnnotationPresent(Arg.class)) {
+                // Parameter uses name specific declaration
+                // {agumentName}
+                // void method(@Arg("argumentName") String argument)
+                Arg arg = param.getAnnotation(Arg.class);
+                String paramName = arg.value();
                 value = placeholders.get(paramName);
-                log("Param " + paramName + " is String: " + value);
+
+                if(value != null) {
+                    PrimitiveParser parser = new PrimitiveParser((String) value, param.getType());
+                    if(parser.isParsed()) {
+                        value = parser.getAsObject();
+                    } else {
+                        commandLib.getUsagePrinterManager().invokeLoggerFor(sender, commandName, args, false);
+                    }
+                    log("Param " + paramName + " is " + value.getClass().getSimpleName() + ": " + value);
+                }
             } else if(param.getType().equals(String[].class)) {
                 value = relativeArgs;
                 log("Param " + param.getName() + " is String[]: " + value);

@@ -34,6 +34,8 @@ public class UsagePrinterManager {
 
         if(nonExistent == canInvokeNonExistent(parsedCommandName)
         && (canInvokeNonExistent(parsedCommandName) || matchesUsageArgs)) {
+
+
             usagePrinter.print(sender, parsedCommandName, args, entryStorage
                     .stream()
                     .filter(e -> e.matchesName(atomicCommandName.get()))
