@@ -6,10 +6,7 @@ import org.bukkit.command.*;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CommandLibBukkit extends CommandLib {
@@ -45,7 +42,7 @@ public class CommandLibBukkit extends CommandLib {
                 @Override
                 public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
                     Object mappingObject = entry.getMappingObject();
-                    List<String> tabCompletions = completeSubcommands(entry.getName(), args);
+                    List<String> tabCompletions = new ArrayList<>(completeSubcommands(entry.getName(), args));
                     if (!tabCompletions.isEmpty()) {
                         return tabCompletions;
                     } else if (mappingObject instanceof TabCompleter
@@ -66,12 +63,12 @@ public class CommandLibBukkit extends CommandLib {
         }
     }
 
-    private List<String> completeSubcommands(String commandName, String[] args) {
+    private Set<String> completeSubcommands(String commandName, String[] args) {
         return getCommands()
                 .stream()
                 .filter(entry -> entry.matchesName(commandName))
                 .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
