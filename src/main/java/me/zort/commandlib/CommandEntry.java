@@ -141,7 +141,7 @@ public class CommandEntry {
 
     public boolean matchesForSuggestion(String commandName, String[] args) {
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+        if(!matchesName(commandName) || syntaxArgs.length == 0 || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
             return false;
         }
         for(int i = 0; i < args.length; i++) {
