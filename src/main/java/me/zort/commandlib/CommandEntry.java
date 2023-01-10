@@ -169,17 +169,15 @@ public class CommandEntry {
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
-            if(mappingArgs.length > 0) {
+            try {
                 if(mappingArgs[0].startsWith("/"))
                     mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
                 String arg = mappingArgs[argIndex];
                 if(!arg.equals("{...args}")) {
                     return Optional.of(arg);
                 }
-            }
-        }/* else if(matchesForSuggestion(commandName, extended)) {
-            return obtainSuggestionMatch(commandName, extended);
-        }*/
+            } catch(IndexOutOfBoundsException ignored) {}
+        }
         return Optional.empty();
     }
 
