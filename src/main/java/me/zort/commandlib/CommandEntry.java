@@ -141,7 +141,9 @@ public class CommandEntry {
 
     public boolean matchesForSuggestion(String commandName, String[] args) {
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || syntaxArgs.length == 0 || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+        if(!matchesName(commandName)
+                || syntaxArgs.length == 0
+                || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
             return false;
         }
         for(int i = 0; i < args.length; i++) {
@@ -167,11 +169,13 @@ public class CommandEntry {
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
-            if(mappingArgs[0].startsWith("/"))
-                mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-            String arg = mappingArgs[argIndex];
-            if(!arg.equals("{...args}")) {
-                return Optional.of(arg);
+            if(mappingArgs.length > 0) {
+                if(mappingArgs[0].startsWith("/"))
+                    mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
+                String arg = mappingArgs[argIndex];
+                if(!arg.equals("{...args}")) {
+                    return Optional.of(arg);
+                }
             }
         }/* else if(matchesForSuggestion(commandName, extended)) {
             return obtainSuggestionMatch(commandName, extended);
