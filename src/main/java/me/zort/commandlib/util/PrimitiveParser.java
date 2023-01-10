@@ -20,7 +20,7 @@ public class PrimitiveParser {
     }
 
     public boolean isParsed() {
-        return error != null && !parsed.getClass().equals(String.class);
+        return error == null && !parsed.getClass().equals(String.class);
     }
 
     public Throwable getError() {
