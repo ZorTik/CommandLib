@@ -6,7 +6,11 @@ import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.Usage;
+import me.zort.commandlib.rule.GeneralArgumentRule;
+import me.zort.commandlib.rule.OrArgumentRule;
+import me.zort.commandlib.rule.PlaceholderArgumentRule;
 import me.zort.commandlib.util.CommandUtil;
+import me.zort.commandlib.util.ContextualCollection;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -24,6 +28,8 @@ public abstract class CommandLib {
     private final List<CommandEntry> commands;
     @Getter(AccessLevel.PROTECTED)
     private final UsagePrinterManager usagePrinterManager;
+    @Getter(AccessLevel.PROTECTED)
+    private final ContextualCollection<CommandArgumentRule> argumentRules;
 
     @Setter
     private boolean debug = false;
@@ -32,6 +38,11 @@ public abstract class CommandLib {
         this.mappingObjects = mappingObjects;
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
+        this.argumentRules = new ContextualCollection<>();
+
+        registerArgumentRule(new GeneralArgumentRule());
+        registerArgumentRule(new PlaceholderArgumentRule());
+        registerArgumentRule(new OrArgumentRule());
     }
 
     // Implementations should implement that commands
@@ -42,6 +53,27 @@ public abstract class CommandLib {
     public abstract void sendMessage(Object sender, String... message);
     public abstract String colorize(String message);
     public abstract Class<?> getDefaultSenderType();
+
+    public boolean registerArgumentRule(CommandArgumentRule rule) {
+        return registerArgumentRule("/", rule); // All commands.
+    }
+
+    /**
+     * Registers rule for accepting arguments based on context.
+     * <p>
+     * Example:
+     * <pre>
+     *     // This registers rule for any command starting with /command
+     *     commandLib.registerArgumentRule("/command", argumentRule);
+     * </pre>
+     *
+     * @param context Context of the rule.
+     * @param rule Rule to be registered.
+     * @return True if rule was registered, false otherwise.
+     */
+    public boolean registerArgumentRule(String context, CommandArgumentRule rule) {
+        return argumentRules.save(context, rule);
+    }
 
     public void registerAll() {
         unregisterAll();
