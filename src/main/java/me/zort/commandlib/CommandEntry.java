@@ -17,6 +17,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 
+import static me.zort.commandlib.util.CommandUtil.parseCommandName;
+
 public class CommandEntry {
 
     @Getter
@@ -141,7 +143,9 @@ public class CommandEntry {
 
     public boolean matchesForSuggestion(String commandName, String[] args) {
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+        if(!matchesName(commandName)
+                || syntaxArgs.length == 0
+                || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
             return false;
         }
         for(int i = 0; i < args.length; i++) {
@@ -167,15 +171,15 @@ public class CommandEntry {
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
-            if(mappingArgs[0].startsWith("/"))
-                mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
-            String arg = mappingArgs[argIndex];
-            if(!arg.equals("{...args}")) {
-                return Optional.of(arg);
-            }
-        }/* else if(matchesForSuggestion(commandName, extended)) {
-            return obtainSuggestionMatch(commandName, extended);
-        }*/
+            try {
+                if(mappingArgs[0].startsWith("/"))
+                    mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
+                String arg = mappingArgs[argIndex];
+                if(!arg.equals("{...args}")) {
+                    return Optional.of(arg);
+                }
+            } catch(IndexOutOfBoundsException ignored) {}
+        }
         return Optional.empty();
     }
 
@@ -238,11 +242,25 @@ public class CommandEntry {
                 // Saving as relative argument.
                 ra[i - syntaxArgs.length] = args[i];
             } else {
+                Set<Class<? extends CommandArgumentRule>> passedRules = new HashSet<>();
+                ParsingProcessData processData = new ParsingProcessData(ph, ra, commandName, args, passedRules);
                 String syntaxName = syntaxArgs[i];
-                if(syntaxName.startsWith("{") && syntaxName.endsWith("}")) {
-                    // Saving as placeholder.
-                    ph.put(syntaxName.substring(1, syntaxName.length() - 1), args[i]);
-                } else if(!syntaxName.equals(args[i])) {
+
+                List<CommandArgumentRule> rules = commandLib.getArgumentRules().getAllInContext("/" + parseCommandName(commandName) + " " + String.join(" ", args));
+
+                for (CommandArgumentRule rule : new ArrayList<>(rules)) {
+                    boolean passed = false;
+
+                    if (rule.test(args[i], syntaxName, processData)) {
+                        passedRules.add(rule.getClass());
+                        passed = true;
+                    }
+
+                    if(!passed)
+                        log("Argument " + args[i] + " failed rule " + rule.getClass().getSimpleName());
+                }
+
+                if(!rules.isEmpty() && passedRules.isEmpty()) {
                     // Command does not match this syntax.
                     return null;
                 }
@@ -305,6 +323,17 @@ public class CommandEntry {
 
         private final Map<String, String> placeholders;
         private final String[] relativeArgs;
+
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class ParsingProcessData {
+        private final Map<String, String> placeholders;
+        private final String[] relativeArgs;
+        private final String commandName;
+        private final String[] args;
+        private final Set<Class<? extends CommandArgumentRule>> passedRules;
 
     }
 

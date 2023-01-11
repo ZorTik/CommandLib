@@ -8,19 +8,23 @@ public class PrimitiveParser {
     private final Class<?> typeClass;
 
     private Object parsed;
-    private Throwable error;
+    private Throwable error = null;
+    private boolean invalidFormat = false;
 
     public PrimitiveParser(String value, Class<?> typeClass) {
         this.value = value;
         this.typeClass = typeClass;
         this.parsed = value;
-        this.error = null;
         if(value != null)
             parse();
     }
 
     public boolean isParsed() {
-        return error != null && !parsed.getClass().equals(String.class);
+        return error == null && !parsed.getClass().equals(String.class);
+    }
+
+    public boolean isInvalidFormat() {
+        return invalidFormat;
     }
 
     public Throwable getError() {
@@ -50,6 +54,8 @@ public class PrimitiveParser {
                 this.parsed = Boolean.parseBoolean(value);
             } else if(typeClass.equals(Character.class)) {
                 this.parsed = value.charAt(0);
+            } else {
+                this.invalidFormat = true;
             }
         } catch(Exception e) {
             this.error = e;
