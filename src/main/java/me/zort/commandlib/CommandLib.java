@@ -30,6 +30,8 @@ public abstract class CommandLib {
     private final UsagePrinterManager usagePrinterManager;
     @Getter(AccessLevel.PROTECTED)
     private final ContextualCollection<CommandArgumentRule> argumentRules;
+    @Setter
+    private CommandEntryFactory entryFactory;
 
     @Setter
     private boolean debug = false;
@@ -39,6 +41,7 @@ public abstract class CommandLib {
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
         this.argumentRules = new ContextualCollection<>();
+        this.entryFactory = new DefaultEntryFactory();
 
         registerArgumentRule(new GeneralArgumentRule());
         registerArgumentRule(new PlaceholderArgumentRule());
@@ -130,7 +133,8 @@ public abstract class CommandLib {
         Class<?> clazz = obj.getClass();
         for(Method method : clazz.getDeclaredMethods()) {
             if(method.isAnnotationPresent(Command.class)) {
-                commands.add(new CommandEntry(this, obj, method));
+                //commands.add(new CommandEntry(this, obj, method));
+                commands.add(entryFactory.create(this, obj, method));
 
                 Command commandAnnot = method.getDeclaredAnnotation(Command.class);
                 if(clazz.isAnnotationPresent(Usage.class) && !commandAnnot.unknown()) {
@@ -144,6 +148,13 @@ public abstract class CommandLib {
                 }
 
             }
+        }
+    }
+
+    private static class DefaultEntryFactory implements CommandEntryFactory {
+        @Override
+        public CommandEntry create(CommandLib commandLib, Object object, Method method) {
+            return new CommandEntry(commandLib, object, method);
         }
     }
 

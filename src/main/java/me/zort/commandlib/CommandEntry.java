@@ -134,9 +134,41 @@ public class CommandEntry {
     public boolean passes(String commandName, String[] args) {
         String syntax = getSyntax();
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
+        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
             // Provided is not this command.
             return false;
+        }
+        return true;
+    }
+
+    public boolean passesArgs(String[] args) {
+        String[] syntaxArgs = getSyntaxArgs();
+
+        if(args.length > syntaxArgs.length && !hasRelativeArgs()) {
+            // Provided args are longer than syntax args and syntax does not
+            // have relative args.
+            return false;
+        }
+
+        for(int i = 0; i < syntaxArgs.length; i++) {
+            String syntaxArg = syntaxArgs[i];
+            if(syntaxArg.startsWith("{") && syntaxArg.endsWith("}")) {
+                // This is a placeholder.
+
+                if(syntaxArg.contains("...args")) {
+                    return true;
+                }
+                continue;
+            }
+
+            if(i >= args.length) {
+                // We're out of args.
+                return false;
+            }
+            if(!syntaxArg.equals(args[i]) && !isPlaceholderArg(syntaxArg)) {
+                // This is not the same argument.
+                return false;
+            }
         }
         return true;
     }
@@ -307,6 +339,11 @@ public class CommandEntry {
 
     public boolean isMiddleware() {
         return Primitives.wrap(method.getReturnType()).equals(Boolean.class);
+    }
+
+    public boolean hasRelativeArgs() {
+        String[] syntaxArgs = getSyntaxArgs();
+        return syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals("{...args}");
     }
 
     public boolean matchesName(String name) {
