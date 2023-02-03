@@ -77,9 +77,10 @@ public class CommandEntry {
             // Returning true because we don't want to invoke invalid syntax methods.
             return true;
         }
+
+        // Build arguments for method invocation
         Map<String, String> placeholders = parseResult.getPlaceholders();
         String[] relativeArgs = parseResult.getRelativeArgs();
-
         Parameter[] params = method.getParameters();
         Object[] invokeArgs = new Object[params.length];
         for(int i = 0; i < params.length; i++) {
@@ -116,10 +117,7 @@ public class CommandEntry {
         try {
             commandLib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
             if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
-                // We're returning negated value, because boolean methods
-                // work as middleware where positive result means continuation
-                // of the process.
-                return !(boolean) method.invoke(mappingObject, invokeArgs);
+                return (Boolean) method.invoke(mappingObject, invokeArgs);
             } else {
                 commandLib.log("Invoking command " + commandName + " with args " + java.util.Arrays.toString(invokeArgs));
                 method.invoke(mappingObject, invokeArgs);
@@ -134,9 +132,41 @@ public class CommandEntry {
     public boolean passes(String commandName, String[] args) {
         String syntax = getSyntax();
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
+        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
             // Provided is not this command.
             return false;
+        }
+        return true;
+    }
+
+    public boolean passesArgs(String[] args) {
+        String[] syntaxArgs = getSyntaxArgs();
+
+        if(args.length > syntaxArgs.length && !hasRelativeArgs()) {
+            // Provided args are longer than syntax args and syntax does not
+            // have relative args.
+            return false;
+        }
+
+        for(int i = 0; i < syntaxArgs.length; i++) {
+            String syntaxArg = syntaxArgs[i];
+            if(syntaxArg.startsWith("{") && syntaxArg.endsWith("}")) {
+                // This is a placeholder.
+
+                if(syntaxArg.contains("...args")) {
+                    return true;
+                }
+                continue;
+            }
+
+            if(i >= args.length) {
+                // We're out of args.
+                return false;
+            }
+            if(!syntaxArg.equals(args[i]) && !isPlaceholderArg(syntaxArg)) {
+                // This is not the same argument.
+                return false;
+            }
         }
         return true;
     }
@@ -167,7 +197,7 @@ public class CommandEntry {
     }
 
     private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
-        //String[] extended = (String[]) ArrayUtils.add(args, "");
+        args = (String[]) ArrayUtils.add(args, "");
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
@@ -307,6 +337,11 @@ public class CommandEntry {
 
     public boolean isMiddleware() {
         return Primitives.wrap(method.getReturnType()).equals(Boolean.class);
+    }
+
+    public boolean hasRelativeArgs() {
+        String[] syntaxArgs = getSyntaxArgs();
+        return syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals("{...args}");
     }
 
     public boolean matchesName(String name) {

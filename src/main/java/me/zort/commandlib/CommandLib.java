@@ -13,11 +13,9 @@ import me.zort.commandlib.util.CommandUtil;
 import me.zort.commandlib.util.ContextualCollection;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public abstract class CommandLib {
 
@@ -30,6 +28,8 @@ public abstract class CommandLib {
     private final UsagePrinterManager usagePrinterManager;
     @Getter(AccessLevel.PROTECTED)
     private final ContextualCollection<CommandArgumentRule> argumentRules;
+    @Setter
+    private CommandEntryFactory entryFactory;
 
     @Setter
     private boolean debug = false;
@@ -39,6 +39,7 @@ public abstract class CommandLib {
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
         this.argumentRules = new ContextualCollection<>();
+        this.entryFactory = new DefaultEntryFactory();
 
         registerArgumentRule(new GeneralArgumentRule());
         registerArgumentRule(new PlaceholderArgumentRule());
@@ -114,12 +115,22 @@ public abstract class CommandLib {
             try {
                 if(entry.invokeConditionally(sender, commandName, args)) {
                     anySuccessful = true;
+                } else if(entry.isMiddleware() && entry.passes(commandName, args)) {
+                    return false;
                 }
             } catch(Exception e) {
                 e.printStackTrace();
             }
         }
         return anySuccessful;
+    }
+
+    public Set<String> completeSubcommands(String commandName, String[] args) {
+        return getCommands()
+                .stream()
+                .filter(entry -> entry.matchesName(commandName))
+                .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
+                .collect(Collectors.toSet());
     }
 
     public void log(String message) {
@@ -130,7 +141,8 @@ public abstract class CommandLib {
         Class<?> clazz = obj.getClass();
         for(Method method : clazz.getDeclaredMethods()) {
             if(method.isAnnotationPresent(Command.class)) {
-                commands.add(new CommandEntry(this, obj, method));
+                //commands.add(new CommandEntry(this, obj, method));
+                commands.add(entryFactory.create(this, obj, method));
 
                 Command commandAnnot = method.getDeclaredAnnotation(Command.class);
                 if(clazz.isAnnotationPresent(Usage.class) && !commandAnnot.unknown()) {
@@ -144,6 +156,13 @@ public abstract class CommandLib {
                 }
 
             }
+        }
+    }
+
+    private static class DefaultEntryFactory implements CommandEntryFactory {
+        @Override
+        public CommandEntry create(CommandLib commandLib, Object object, Method method) {
+            return new CommandEntry(commandLib, object, method);
         }
     }
 

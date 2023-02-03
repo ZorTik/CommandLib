@@ -63,14 +63,6 @@ public class CommandLibBukkit extends CommandLib {
         }
     }
 
-    private Set<String> completeSubcommands(String commandName, String[] args) {
-        return getCommands()
-                .stream()
-                .filter(entry -> entry.matchesName(commandName))
-                .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
-                .collect(Collectors.toSet());
-    }
-
     @Override
     public void unregister(CommandEntry entry) {
         CommandMap commandMap = getCommandMap();

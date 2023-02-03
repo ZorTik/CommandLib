@@ -20,6 +20,7 @@ public class UsagePrinterManager {
     private final Map<String, UsagePrinter<?>> usageLoggers = Maps.newConcurrentMap();
     private final Map<String, Usage>  usageAnnots = Maps.newConcurrentMap();
 
+    @SuppressWarnings("unchecked, rawtypes")
     public void invokeLoggerFor(Object sender, String commandName, String[] args, boolean nonExistent) {
         AtomicReference<String> atomicCommandName = new AtomicReference<>(commandName);
         String parsedCommandName = CommandUtil.parseCommandName(new String[]{commandName});
