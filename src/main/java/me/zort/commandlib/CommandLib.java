@@ -13,11 +13,9 @@ import me.zort.commandlib.util.CommandUtil;
 import me.zort.commandlib.util.ContextualCollection;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public abstract class CommandLib {
 
@@ -117,12 +115,22 @@ public abstract class CommandLib {
             try {
                 if(entry.invokeConditionally(sender, commandName, args)) {
                     anySuccessful = true;
+                } else if(entry.isMiddleware() && entry.passes(commandName, args)) {
+                    return false;
                 }
             } catch(Exception e) {
                 e.printStackTrace();
             }
         }
         return anySuccessful;
+    }
+
+    public Set<String> completeSubcommands(String commandName, String[] args) {
+        return getCommands()
+                .stream()
+                .filter(entry -> entry.matchesName(commandName))
+                .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
+                .collect(Collectors.toSet());
     }
 
     public void log(String message) {

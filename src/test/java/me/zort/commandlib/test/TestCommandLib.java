@@ -67,4 +67,8 @@ public class TestCommandLib extends CommandLib {
     public Class<?> getDefaultSenderType() {
         return PrintStream.class;
     }
+
+    public List<CommandEntry> getEntries() {
+        return entries;
+    }
 }

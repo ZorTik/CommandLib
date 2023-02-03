@@ -77,9 +77,10 @@ public class CommandEntry {
             // Returning true because we don't want to invoke invalid syntax methods.
             return true;
         }
+
+        // Build arguments for method invocation
         Map<String, String> placeholders = parseResult.getPlaceholders();
         String[] relativeArgs = parseResult.getRelativeArgs();
-
         Parameter[] params = method.getParameters();
         Object[] invokeArgs = new Object[params.length];
         for(int i = 0; i < params.length; i++) {
@@ -116,10 +117,7 @@ public class CommandEntry {
         try {
             commandLib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
             if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
-                // We're returning negated value, because boolean methods
-                // work as middleware where positive result means continuation
-                // of the process.
-                return !(boolean) method.invoke(mappingObject, invokeArgs);
+                return (Boolean) method.invoke(mappingObject, invokeArgs);
             } else {
                 commandLib.log("Invoking command " + commandName + " with args " + java.util.Arrays.toString(invokeArgs));
                 method.invoke(mappingObject, invokeArgs);

@@ -1,7 +1,9 @@
 package me.zort.commandlib.test;
 
+import me.zort.commandlib.CommandEntry;
 import me.zort.commandlib.test.entry.TestCommand;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -15,7 +17,7 @@ public class EntryTests {
 
     @BeforeAll
     public static void setup() {
-        testLibrary.setDebug(true);
+        testLibrary.setDebug(false);
         testLibrary.registerAll();
     }
 
@@ -24,7 +26,7 @@ public class EntryTests {
         TestCommandLib staticTestLibrary = testLibrary;
         UUID uuid = testLibrary.test("/test", new String[]{"command1"});
 
-        assertEquals(2, testLibrary.getReport(uuid).countPassed());
+        assertEquals(3, testLibrary.getReport(uuid).countPassed());
 
         int commandsPassed = testLibrary.getReport(uuid).countPassed(entry -> !entry.isMiddleware() && !entry.isErrorHandler());
 
@@ -36,8 +38,13 @@ public class EntryTests {
         // Invoke it
         UUID uuid = testLibrary.test("/test", new String[]{"dontcontinue", "one"});
 
-        assertTrue(testLibrary.getReport(uuid).hasPassed("/test {...args}"));
+        assertFalse(testLibrary.getReport(uuid).hasPassed("/test {...args}"));
         assertFalse(testLibrary.getReport(uuid).hasPassed("/test dontcontinue one"));
+    }
+
+    @Test
+    public void testSuggestions() {
+        assertFalse(testLibrary.completeSubcommands("/test", new String[0]).isEmpty());
     }
 
 }
