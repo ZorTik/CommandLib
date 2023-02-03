@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,7 +45,9 @@ public class EntryTests {
 
     @Test
     public void testSuggestions() {
-        assertFalse(testLibrary.completeSubcommands("/test", new String[0]).isEmpty());
+        Set<String> completions = testLibrary.completeSubcommands("/test", new String[0]);
+        System.out.println(completions);
+        assertFalse(completions.isEmpty());
     }
 
 }

@@ -197,7 +197,7 @@ public class CommandEntry {
     }
 
     private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
-        //String[] extended = (String[]) ArrayUtils.add(args, "");
+        args = (String[]) ArrayUtils.add(args, "");
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
