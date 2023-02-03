@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.Getter;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
-import me.zort.commandlib.annotation.CommandMeta;
+import me.zort.commandlib.annotation.CommandRegistration;
 import me.zort.commandlib.util.Arrays;
 import me.zort.commandlib.util.NamingStrategy;
 import me.zort.commandlib.util.PrimitiveParser;
@@ -41,22 +41,26 @@ public class CommandEntry {
 
         this.annot = method.getDeclaredAnnotation(Command.class);
         this.meta = new CommandEntryMeta();
-        if(method.getDeclaringClass().isAnnotationPresent(CommandMeta.class)) {
-            CommandMeta commandMeta = method.getDeclaringClass().getDeclaredAnnotation(CommandMeta.class);
-            this.meta.setDescription(commandMeta.description());
-            this.meta.setUsage(commandMeta.usage());
-            this.meta.setRequiredSenderType(commandMeta.requiredSenderType());
-            this.meta.setInvalidSenderMessage(commandMeta.invalidSenderMessage());
-            if(meta.getRequiredSenderType().equals(Object.class)) {
-                // Setting required sender type to sender type in the method
-                // if is present. If meta has specified sender type other
-                // than object, we'll use that.
-                for(Parameter parameter : method.getParameters()) {
-                    if(commandLib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
-                        // We'll use this sender type as required.
-                        this.meta.setRequiredSenderType(parameter.getType());
-                        break;
-                    }
+        if(!method.getDeclaringClass().isAnnotationPresent(CommandRegistration.class)) {
+            throw new RuntimeException(String.format("Command class [%s] is not annotated with @CommandRegistration!",
+                    mappingObject.getClass().getName()));
+        }
+
+        CommandRegistration commandRegistration = method.getDeclaringClass().getDeclaredAnnotation(CommandRegistration.class);
+        this.meta.setName(commandRegistration.name());
+        this.meta.setDescription(commandRegistration.description());
+        this.meta.setUsage(commandRegistration.usage());
+        this.meta.setRequiredSenderType(commandRegistration.requiredSenderType());
+        this.meta.setInvalidSenderMessage(commandRegistration.invalidSenderMessage());
+        if(meta.getRequiredSenderType().equals(Object.class)) {
+            // Setting required sender type to sender type in the method
+            // if is present. If meta has specified sender type other
+            // than object, we'll use that.
+            for(Parameter parameter : method.getParameters()) {
+                if(commandLib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
+                    // We'll use this sender type as required.
+                    this.meta.setRequiredSenderType(parameter.getType());
+                    break;
                 }
             }
         }
@@ -132,7 +136,7 @@ public class CommandEntry {
     public boolean passes(String commandName, String[] args) {
         String syntax = getSyntax();
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
+        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith("{...args}") && syntaxArgs.length != args.length)) {
             // Provided is not this command.
             return false;
         }
@@ -258,6 +262,8 @@ public class CommandEntry {
         }
         if(syntax.endsWith(" {...args}")) {
             syntaxArgs = (String[]) ArrayUtils.remove(syntaxArgs, syntaxArgs.length - 1);
+        } else if(syntax.equals("{...args}")) {
+            syntaxArgs = new String[0];
         }
         if(args.length - syntaxArgs.length < 0) {
             // Not enough arguments.
@@ -310,12 +316,7 @@ public class CommandEntry {
     }
 
     public String getName() {
-        String[] s = getSyntax().toLowerCase().split(" ");
-        if(s[0].startsWith("/")) {
-            return s[0].substring(1);
-        } else {
-            return s[0];
-        }
+        return getMeta().getName().replaceAll("/", "");
     }
 
     public String getSyntax() {
@@ -327,8 +328,7 @@ public class CommandEntry {
     }
 
     public String[] getSyntaxArgs() {
-        String syntax = getSyntax();
-        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+        return getSyntax().split(" ");
     }
 
     public boolean isErrorHandler() {

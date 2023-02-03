@@ -1,40 +1,39 @@
 package me.zort.commandlib.test.entry;
 
 import me.zort.commandlib.annotation.Command;
-import me.zort.commandlib.annotation.CommandMeta;
+import me.zort.commandlib.annotation.CommandRegistration;
 
 import java.io.PrintStream;
 
-@CommandMeta(
-        usage = "/",
-        description = ""
-)
+@CommandRegistration(name = "/test")
 public class TestCommand {
 
-    @Command("/test {...args}")
+    @Command("{...args}")
     public boolean shouldNeverInvokeMiddleware(String[] args) {
         System.out.println("shouldNeverInvokeMiddleware");
-        return !args[0].equalsIgnoreCase("dontcontinue");
+        if (args.length > 0 && args[0].equalsIgnoreCase("dontcontinue"))
+            return false;
+        return true;
     }
 
-    @Command("/test dontcontinue one")
+    @Command("dontcontinue one")
     public void shouldNeverInvoke() {
         throw new IllegalStateException("This entry should never be invoked!");
     }
 
-    @Command("/test command1")
+    @Command("command1")
     public boolean commandOneMiddleware() {
         System.out.println("commandOneMiddleware");
         // Just for clarifying that the middleware invoked.
         return true;
     }
 
-    @Command("/test command1")
+    @Command("command1")
     public void commandOne(PrintStream printStream) {
         printStream.println("Command one invoked!");
     }
 
-    @Command("/test command2")
+    @Command("command2")
     public void commandTwo(PrintStream printStream) {
         printStream.println("Command two invoked!");
     }

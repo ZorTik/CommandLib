@@ -12,8 +12,9 @@ import java.lang.annotation.Target;
 // public class KillCommandHandlers
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface CommandMeta {
+public @interface CommandRegistration {
 
+    String name();
     String description() default "";
     String usage() default "";
     Class<?> requiredSenderType() default Object.class;
