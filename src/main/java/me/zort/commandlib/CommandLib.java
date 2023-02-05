@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
+import me.zort.commandlib.annotation.CommandRegistration;
 import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.rule.GeneralArgumentRule;
 import me.zort.commandlib.rule.OrArgumentRule;
@@ -149,18 +150,18 @@ public abstract class CommandLib {
     private void loadMappingObject(Object obj) {
         Class<?> clazz = obj.getClass();
         for(Method method : clazz.getDeclaredMethods()) {
-            if(method.isAnnotationPresent(Command.class)) {
+            if(method.isAnnotationPresent(Command.class) && clazz.isAnnotationPresent(CommandRegistration.class)) {
                 //commands.add(new CommandEntry(this, obj, method));
                 commands.add(entryFactory.create(this, obj, method));
 
+                CommandRegistration registration = clazz.getDeclaredAnnotation(CommandRegistration.class);
                 Command commandAnnot = method.getDeclaredAnnotation(Command.class);
                 if(clazz.isAnnotationPresent(Usage.class) && !commandAnnot.unknown()) {
                     Usage usage = clazz.getDeclaredAnnotation(Usage.class);
-                    String commandName = CommandUtil.parseCommandName(commandAnnot.value());
+                    String commandName = CommandUtil.parseCommandName(registration.name());
 
-                    if(commandName != null) {
+                    if(commandName != null)
                         usagePrinterManager.registerUsageLogging(usage, commandName);
-                    }
 
                 }
 
