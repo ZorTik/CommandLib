@@ -1,16 +1,15 @@
 package me.zort.commandlib.test;
 
-import me.zort.commandlib.CommandEntry;
 import me.zort.commandlib.test.entry.TestCommand;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class EntryTests {
 

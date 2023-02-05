@@ -1,6 +1,6 @@
 package me.zort.commandlib.annotation;
 
-import me.zort.commandlib.UsagePrinter;
+import me.zort.commandlib.usage.UsagePrinter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,6 +10,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Usage {
+
+    /**
+     * Sets a printer to use for this mapping class.
+     * @return The printer.
+     */
+    Class<? extends UsagePrinter> printer();
 
     /**
      * Args syntax to invoke usage on.
@@ -33,11 +39,5 @@ public @interface Usage {
      * @return The syntax.
      */
     String invokeArgs() default "";
-
-    /**
-     * Sets a printer to use for this mapping class.
-     * @return The printer.
-     */
-    Class<? extends UsagePrinter> printer();
 
 }

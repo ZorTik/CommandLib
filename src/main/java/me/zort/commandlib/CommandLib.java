@@ -9,6 +9,7 @@ import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.rule.GeneralArgumentRule;
 import me.zort.commandlib.rule.OrArgumentRule;
 import me.zort.commandlib.rule.PlaceholderArgumentRule;
+import me.zort.commandlib.usage.UsagePrinterManager;
 import me.zort.commandlib.util.CommandUtil;
 import me.zort.commandlib.util.ContextualCollection;
 
@@ -97,6 +98,14 @@ public abstract class CommandLib {
         boolean nonExistent = false;
 
         if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
+
+            if (args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
+                args = Arrays.copyOf(args, args.length - 1);
+
+                if (usagePrinterManager.invokeLoggerFor(sender, commandName, args, true))
+                    return;
+            }
+
             doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
 
             nonExistent = true;

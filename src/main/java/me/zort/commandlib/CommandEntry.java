@@ -7,6 +7,7 @@ import lombok.Getter;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandRegistration;
+import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.util.Arrays;
 import me.zort.commandlib.util.NamingStrategy;
 import me.zort.commandlib.util.PrimitiveParser;
