@@ -37,20 +37,7 @@ public class UsagePrinterManager {
 
         int printedUsages = 0;
 
-        if(nonExistent == canInvokeNonExistent(parsedCommandName)
-        && (canInvokeNonExistent(parsedCommandName) || matchesUsageArgs)) {
-            List<String> usages = new ArrayList<>();
-
-            for (CommandEntry e : temporaryEntries) {
-                if (!e.matchesName(atomicCommandName.get()) || !e.isEligibleForUsage())
-                    continue;
-
-                usages.add(e.buildUsage());
-            }
-
-            usagePrinter.print(sender, parsedCommandName, args, usages);
-            printedUsages = usages.size();
-        } else if(usageAnnot.enableContextualHelp() && args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
+        if(usageAnnot.enableContextualHelp() && args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
             args = Arrays.copyOf(args, args.length - 1);
 
             List<String> usages = new ArrayList<>();
@@ -64,6 +51,19 @@ public class UsagePrinterManager {
                     usage = String.join(" ", Arrays.copyOfRange(spl, 0, args.length + 2)) + " help";
                 }
                 usages.add(usage);
+            }
+
+            usagePrinter.print(sender, parsedCommandName, args, usages);
+            printedUsages = usages.size();
+        } else if(nonExistent == canInvokeNonExistent(parsedCommandName)
+        && (canInvokeNonExistent(parsedCommandName) || matchesUsageArgs)) {
+            List<String> usages = new ArrayList<>();
+
+            for (CommandEntry e : temporaryEntries) {
+                if (!e.matchesName(atomicCommandName.get()) || !e.isEligibleForUsage())
+                    continue;
+
+                usages.add(e.buildUsage());
             }
 
             usagePrinter.print(sender, parsedCommandName, args, usages);
