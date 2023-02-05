@@ -16,6 +16,7 @@ public @interface Usage {
      * @return The printer.
      */
     Class<? extends UsagePrinter> printer();
+    boolean enableContextualHelp() default false;
 
     /**
      * Args syntax to invoke usage on.

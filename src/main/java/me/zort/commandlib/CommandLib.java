@@ -101,8 +101,6 @@ public abstract class CommandLib {
         if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
 
             if (args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
-                args = Arrays.copyOf(args, args.length - 1);
-
                 if (usagePrinterManager.invokeLoggerFor(sender, commandName, args, true))
                     return;
             }
