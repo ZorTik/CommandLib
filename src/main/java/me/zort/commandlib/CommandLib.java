@@ -95,6 +95,8 @@ public abstract class CommandLib {
         if(!commandName.startsWith("/")) {
             commandName = "/" + commandName;
         }
+        if (args.length == 1 && args[0].isEmpty())
+            args = new String[0];
 
         boolean nonExistent = false;
 
