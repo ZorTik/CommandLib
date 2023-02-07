@@ -28,9 +28,16 @@ public class EntryTests {
 
         assertEquals(3, testLibrary.getReport(uuid).countPassed());
 
-        int commandsPassed = testLibrary.getReport(uuid).countPassed(entry -> !entry.isMiddleware() && !entry.isErrorHandler());
+        int basicPassed = testLibrary.getReport(uuid).countPassedCommands();
 
-        assertEquals(1, commandsPassed);
+        assertEquals(1, basicPassed);
+    }
+
+    @Test
+    public void testWithoutArgs() {
+        UUID uuid = testLibrary.test("/test", new String[0]);
+        int basicPassed = testLibrary.getReport(uuid).countPassedCommands();
+        assertEquals(1, basicPassed);
     }
 
     @Test

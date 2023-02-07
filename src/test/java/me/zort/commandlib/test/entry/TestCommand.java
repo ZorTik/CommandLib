@@ -16,6 +16,11 @@ public class TestCommand {
         return true;
     }
 
+    @Command
+    public void withoutArgs() {
+        System.out.println("Without args invoked!");
+    }
+
     @Command("dontcontinue one")
     public void shouldNeverInvoke() {
         throw new IllegalStateException("This entry should never be invoked!");

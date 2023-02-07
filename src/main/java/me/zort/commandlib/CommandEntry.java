@@ -265,6 +265,8 @@ public class CommandEntry {
             syntaxArgs = (String[]) ArrayUtils.remove(syntaxArgs, syntaxArgs.length - 1);
         } else if(syntax.equals("{...args}")) {
             syntaxArgs = new String[0];
+        } else if(syntax.isEmpty()) {
+            syntaxArgs = new String[0];
         }
         if(args.length - syntaxArgs.length < 0) {
             // Not enough arguments.
@@ -329,7 +331,11 @@ public class CommandEntry {
     }
 
     public String[] getSyntaxArgs() {
-        return getSyntax().split(" ");
+        String syntax = getSyntax();
+        if (syntax.isEmpty())
+            return new String[0];
+
+        return syntax.split(" ");
     }
 
     public boolean isErrorHandler() {
