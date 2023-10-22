@@ -1,4 +1,4 @@
-package me.zort.commandlib;
+package me.zort.commandlib.usage;
 
 import java.util.List;
 

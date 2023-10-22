@@ -5,10 +5,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
+import me.zort.commandlib.annotation.CommandRegistration;
 import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.rule.GeneralArgumentRule;
 import me.zort.commandlib.rule.OrArgumentRule;
 import me.zort.commandlib.rule.PlaceholderArgumentRule;
+import me.zort.commandlib.usage.UsagePrinterManager;
 import me.zort.commandlib.util.CommandUtil;
 import me.zort.commandlib.util.ContextualCollection;
 
@@ -93,10 +95,18 @@ public abstract class CommandLib {
         if(!commandName.startsWith("/")) {
             commandName = "/" + commandName;
         }
+        if (args.length == 1 && args[0].isEmpty())
+            args = new String[0];
 
         boolean nonExistent = false;
 
         if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
+
+            if (args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
+                if (usagePrinterManager.invokeLoggerFor(sender, commandName, args, true))
+                    return;
+            }
+
             doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
 
             nonExistent = true;
@@ -140,18 +150,18 @@ public abstract class CommandLib {
     private void loadMappingObject(Object obj) {
         Class<?> clazz = obj.getClass();
         for(Method method : clazz.getDeclaredMethods()) {
-            if(method.isAnnotationPresent(Command.class)) {
+            if(method.isAnnotationPresent(Command.class) && clazz.isAnnotationPresent(CommandRegistration.class)) {
                 //commands.add(new CommandEntry(this, obj, method));
                 commands.add(entryFactory.create(this, obj, method));
 
+                CommandRegistration registration = clazz.getDeclaredAnnotation(CommandRegistration.class);
                 Command commandAnnot = method.getDeclaredAnnotation(Command.class);
                 if(clazz.isAnnotationPresent(Usage.class) && !commandAnnot.unknown()) {
                     Usage usage = clazz.getDeclaredAnnotation(Usage.class);
-                    String commandName = CommandUtil.parseCommandName(commandAnnot.value());
+                    String commandName = CommandUtil.parseCommandName(registration.name());
 
-                    if(commandName != null) {
+                    if(commandName != null)
                         usagePrinterManager.registerUsageLogging(usage, commandName);
-                    }
 
                 }
 
