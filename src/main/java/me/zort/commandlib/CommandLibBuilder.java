@@ -33,10 +33,14 @@ public class CommandLibBuilder {
         return this;
     }
 
-    public CommandLib register() {
-        CommandLib commandLib = proxy
+    public CommandLib build() {
+        return proxy
                 ? new CommandLibProxy(plugin, mappingObjects)
                 : new CommandLibBukkit(plugin, mappingObjects);
+    }
+
+    public CommandLib register() {
+        CommandLib commandLib = build();
         commandLib.registerAll();
         return commandLib;
     }
