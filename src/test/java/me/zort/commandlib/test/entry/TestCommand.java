@@ -1,5 +1,6 @@
 package me.zort.commandlib.test.entry;
 
+import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandRegistration;
 
@@ -41,6 +42,11 @@ public class TestCommand {
     @Command("command2")
     public void commandTwo(PrintStream printStream) {
         printStream.println("Command two invoked!");
+    }
+
+    @Command("command3 {arg}")
+    public void commandThree(PrintStream printStream, @Arg("arg") String arg) {
+        printStream.println("Command three invoked with: " + arg);
     }
 
 }

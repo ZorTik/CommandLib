@@ -7,7 +7,6 @@ import lombok.Getter;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandRegistration;
-import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.util.Arrays;
 import me.zort.commandlib.util.NamingStrategy;
 import me.zort.commandlib.util.PrimitiveParser;
@@ -21,25 +20,38 @@ import java.util.*;
 import static me.zort.commandlib.util.CommandUtil.parseCommandName;
 
 public class CommandEntry {
-
+    private final CommandLib lib;
     @Getter
     private final CommandEntryMeta meta;
-
-    private final CommandLib commandLib;
     @Getter
     private final Object mappingObject;
     private final Method method;
     private final Command annot;
 
+    @AllArgsConstructor
+    @Data
+    private static class ParseResult {
+        private final Map<String, String> placeholders;
+        private final String[] relativeArgs;
+    }
 
-    public CommandEntry(CommandLib commandLib, Object mappingObject, Method method) {
-        this.commandLib = commandLib;
+    @AllArgsConstructor
+    @Getter
+    public static class ParsingProcessData {
+        private final Map<String, String> placeholders;
+        private final String[] relativeArgs;
+        private final String commandName;
+        private final String[] args;
+        private final Set<Class<? extends CommandArgumentRule>> passedRules;
+    }
+
+    public CommandEntry(CommandLib lib, Object mappingObject, Method method) {
+        this.lib = lib;
         this.mappingObject = mappingObject;
         this.method = method;
         if(!method.isAnnotationPresent(Command.class)) {
             throw new IllegalArgumentException("Method is not command-like!");
         }
-
         this.annot = method.getDeclaredAnnotation(Command.class);
         this.meta = new CommandEntryMeta();
         if(!method.getDeclaringClass().isAnnotationPresent(CommandRegistration.class)) {
@@ -58,7 +70,7 @@ public class CommandEntry {
             // if is present. If meta has specified sender type other
             // than object, we'll use that.
             for(Parameter parameter : method.getParameters()) {
-                if(commandLib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
+                if(lib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
                     // We'll use this sender type as required.
                     this.meta.setRequiredSenderType(parameter.getType());
                     break;
@@ -77,7 +89,7 @@ public class CommandEntry {
             // Invalid sender type.
             String[] invalidSenderMessage = meta.getInvalidSenderMessage();
             if(invalidSenderMessage.length > 0) {
-                commandLib.sendMessage(sender, Arrays.map(invalidSenderMessage, commandLib::colorize));
+                lib.sendMessage(sender, Arrays.map(invalidSenderMessage, lib::colorize));
             }
             // Returning true because we don't want to invoke invalid syntax methods.
             return true;
@@ -104,7 +116,7 @@ public class CommandEntry {
                     if(parser.isParsed()) {
                         value = parser.getAsObject();
                     } else {
-                        commandLib.getUsagePrinterManager().invokeLoggerFor(sender, commandName, args, false);
+                        lib.getUsagePrinterManager().invokeLoggerFor(sender, commandName, args, false);
                     }
                     log("Param " + paramName + " is " + value.getClass().getSimpleName() + ": " + value);
                 }
@@ -120,11 +132,11 @@ public class CommandEntry {
             invokeArgs[i] = value;
         }
         try {
-            commandLib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
+            lib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
             if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
                 return (Boolean) method.invoke(mappingObject, invokeArgs);
             } else {
-                commandLib.log("Invoking command " + commandName + " with args " + java.util.Arrays.toString(invokeArgs));
+                lib.log("Invoking command " + commandName + " with args " + java.util.Arrays.toString(invokeArgs));
                 method.invoke(mappingObject, invokeArgs);
             }
             return true;
@@ -285,7 +297,7 @@ public class CommandEntry {
                 ParsingProcessData processData = new ParsingProcessData(ph, ra, commandName, args, passedRules);
                 String syntaxName = syntaxArgs[i];
 
-                List<CommandArgumentRule> rules = commandLib.getArgumentRules().getAllInContext("/" + parseCommandName(commandName) + " " + String.join(" ", args));
+                List<CommandArgumentRule> rules = lib.getArgumentRules().getAllInContext("/" + parseCommandName(commandName) + " " + String.join(" ", args));
 
                 for (CommandArgumentRule rule : new ArrayList<>(rules)) {
                     boolean passed = false;
@@ -315,7 +327,7 @@ public class CommandEntry {
     }
 
     public void register() {
-        commandLib.register(this);
+        lib.register(this);
     }
 
     public String getName() {
@@ -356,27 +368,7 @@ public class CommandEntry {
     }
 
     private void log(String s) {
-        commandLib.log(s);
-    }
-
-    @AllArgsConstructor
-    @Data
-    private static class ParseResult {
-
-        private final Map<String, String> placeholders;
-        private final String[] relativeArgs;
-
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class ParsingProcessData {
-        private final Map<String, String> placeholders;
-        private final String[] relativeArgs;
-        private final String commandName;
-        private final String[] args;
-        private final Set<Class<? extends CommandArgumentRule>> passedRules;
-
+        lib.log(s);
     }
 
 }

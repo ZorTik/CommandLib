@@ -20,7 +20,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public abstract class CommandLib {
-
     public static final Gson GSON = new Gson();
 
     private final Iterable<Object> mappingObjects;
@@ -41,7 +40,7 @@ public abstract class CommandLib {
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
         this.argumentRules = new ContextualCollection<>();
-        this.entryFactory = new DefaultEntryFactory();
+        this.entryFactory = CommandEntry::new;
 
         registerArgumentRule(new GeneralArgumentRule());
         registerArgumentRule(new PlaceholderArgumentRule());
@@ -90,7 +89,6 @@ public abstract class CommandLib {
     }
 
     // Command name with slash.
-    @SuppressWarnings("unchecked")
     protected void invoke(Object sender, String commandName, String[] args) {
         if(!commandName.startsWith("/")) {
             commandName = "/" + commandName;
@@ -166,13 +164,6 @@ public abstract class CommandLib {
                 }
 
             }
-        }
-    }
-
-    private static class DefaultEntryFactory implements CommandEntryFactory {
-        @Override
-        public CommandEntry create(CommandLib commandLib, Object object, Method method) {
-            return new CommandEntry(commandLib, object, method);
         }
     }
 

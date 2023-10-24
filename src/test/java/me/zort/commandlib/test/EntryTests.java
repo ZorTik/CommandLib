@@ -22,6 +22,13 @@ public class EntryTests {
     }
 
     @Test
+    public void testWithArgument() {
+        UUID uuid = testLibrary.test("/test", new String[]{"command3", "argument"});
+        assertEquals(2, testLibrary.getReport(uuid).countPassed());
+        assertEquals(1, testLibrary.getReport(uuid).countPassedCommands());
+    }
+
+    @Test
     public void testSingleInvoke() {
         TestCommandLib staticTestLibrary = testLibrary;
         UUID uuid = testLibrary.test("/test", new String[]{"command1"});
