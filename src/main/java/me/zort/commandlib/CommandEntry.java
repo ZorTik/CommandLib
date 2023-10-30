@@ -7,6 +7,9 @@ import lombok.Getter;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandRegistration;
+import me.zort.commandlib.annotation.Suggest;
+import me.zort.commandlib.suggestion.SuggestionProvider;
+import me.zort.commandlib.suggestion.SuggestionProviderStore;
 import me.zort.commandlib.util.Arrays;
 import me.zort.commandlib.util.NamingStrategy;
 import me.zort.commandlib.util.PrimitiveParser;
@@ -16,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static me.zort.commandlib.util.CommandUtil.parseCommandName;
 
@@ -77,6 +81,7 @@ public class CommandEntry {
                 }
             }
         }
+        populateSuggestionStore();
     }
 
     public boolean invokeConditionally(Object sender, String commandName, String[] args) {
@@ -198,23 +203,28 @@ public class CommandEntry {
         for(int i = 0; i < args.length; i++) {
             String arg = args[i];
             if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
-                // We're in the last argument and it's a varargs.
+                // We're in the last argument, and it's a varargs.
                 return true;
             } else if(i >= syntaxArgs.length) {
                 return false;
             } else if(isPlaceholderArg(syntaxArgs[i])) {
                 continue;
             }
-            boolean last = i >= args.length - 1;
+
+            /*boolean last = i == args.length - 1;
             if((last && !syntaxArgs[i].startsWith(arg)) || (!last && !syntaxArgs[i].equals(arg))) {
+                return false;
+            }*/
+
+            if (!syntaxArgs[i].startsWith(arg)) {
                 return false;
             }
         }
         return true;
     }
 
-    private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
-        args = (String[]) ArrayUtils.add(args, "");
+    public List<String> getSuggestions(Object sender, String commandName, String[] args) {
+        //args = (String[]) ArrayUtils.add(args, "");
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
@@ -223,15 +233,24 @@ public class CommandEntry {
                     mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
                 String arg = mappingArgs[argIndex];
                 if(!arg.equals("{...args}")) {
-                    return Optional.of(arg);
+                    if (isPlaceholderArg(arg)) {
+                        // This argument is a placeholder.
+                        String name = arg.substring(1, arg.length() - 1);
+                        Parameter parameter = getArgParameter(name);
+                        if (parameter != null && parameter.isAnnotationPresent(Suggest.class)) {
+                            SuggestionProvider provider = lib.getSuggestionStore()
+                                    .getProvider(parameter.getDeclaredAnnotation(Suggest.class).value());
+                            if (provider != null) {
+                                return provider.suggest(sender, args[args.length - 1]);
+                            }
+                        }
+                    } else {
+                        return Collections.singletonList(arg);
+                    }
                 }
             } catch(IndexOutOfBoundsException ignored) {}
         }
-        return Optional.empty();
-    }
-
-    public List<String> getSuggestions(String commandName, String[] args) {
-        return obtainSuggestionMatch(commandName, args).map(Collections::singletonList).orElse(Collections.emptyList());
+        return Collections.emptyList();
     }
 
     public String buildUsage() {
@@ -350,6 +369,18 @@ public class CommandEntry {
         return syntax.split(" ");
     }
 
+    public Parameter getArgParameter(String name) {
+        for(Parameter parameter : method.getParameters()) {
+            if(parameter.isAnnotationPresent(Arg.class)) {
+                Arg arg = parameter.getDeclaredAnnotation(Arg.class);
+                if(arg.value().equals(name)) {
+                    return parameter;
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean isErrorHandler() {
         return annot.unknown();
     }
@@ -369,6 +400,11 @@ public class CommandEntry {
 
     private void log(String s) {
         lib.log(s);
+    }
+
+    private void populateSuggestionStore() {
+        SuggestionProviderStore store = lib.getSuggestionStore();
+        // TODO: Populate suggestion store
     }
 
 }

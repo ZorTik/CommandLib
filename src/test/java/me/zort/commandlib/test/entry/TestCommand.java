@@ -3,8 +3,11 @@ package me.zort.commandlib.test.entry;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
 import me.zort.commandlib.annotation.CommandRegistration;
+import me.zort.commandlib.annotation.Suggest;
+import me.zort.commandlib.suggestion.SuggestionProviderStore;
 
 import java.io.PrintStream;
+import java.util.List;
 
 @CommandRegistration(name = "/test")
 public class TestCommand {
@@ -45,8 +48,17 @@ public class TestCommand {
     }
 
     @Command("command3 {arg}")
-    public void commandThree(PrintStream printStream, @Arg("arg") String arg) {
+    public void commandThree(
+            PrintStream printStream,
+            @Arg("arg") @Suggest("argProvider") String arg
+    ) {
         printStream.println("Command three invoked with: " + arg);
+    }
+
+    public void suggestions(SuggestionProviderStore store) {
+        store.registerProvider("argProvider", (sender, arg) -> {
+            return List.of("suggestion1", "suggestion2", "suggestion3");
+        });
     }
 
 }

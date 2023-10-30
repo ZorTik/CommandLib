@@ -10,6 +10,7 @@ import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.rule.GeneralArgumentRule;
 import me.zort.commandlib.rule.OrArgumentRule;
 import me.zort.commandlib.rule.PlaceholderArgumentRule;
+import me.zort.commandlib.suggestion.SuggestionProviderStore;
 import me.zort.commandlib.usage.UsagePrinterManager;
 import me.zort.commandlib.util.CommandUtil;
 import me.zort.commandlib.util.ContextualCollection;
@@ -19,7 +20,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public abstract class CommandLib {
+// S = CommandSender
+public abstract class CommandLib<S> {
     public static final Gson GSON = new Gson();
 
     private final Iterable<Object> mappingObjects;
@@ -29,6 +31,8 @@ public abstract class CommandLib {
     private final UsagePrinterManager usagePrinterManager;
     @Getter(AccessLevel.PROTECTED)
     private final ContextualCollection<CommandArgumentRule> argumentRules;
+    @Getter(AccessLevel.PROTECTED)
+    private final SuggestionProviderStore suggestionStore;
     @Setter
     private CommandEntryFactory entryFactory;
 
@@ -40,6 +44,7 @@ public abstract class CommandLib {
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
         this.argumentRules = new ContextualCollection<>();
+        this.suggestionStore = new SuggestionProviderStore();
         this.entryFactory = CommandEntry::new;
 
         registerArgumentRule(new GeneralArgumentRule());
@@ -133,11 +138,11 @@ public abstract class CommandLib {
         return anySuccessful;
     }
 
-    public Set<String> completeSubcommands(String commandName, String[] args) {
+    public Set<String> completeSubcommands(S sender, String commandName, String[] args) {
         return getCommands()
                 .stream()
                 .filter(entry -> entry.matchesName(commandName))
-                .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
+                .flatMap(entry -> entry.getSuggestions(sender, commandName, args).stream())
                 .collect(Collectors.toSet());
     }
 
@@ -147,8 +152,13 @@ public abstract class CommandLib {
 
     private void loadMappingObject(Object obj) {
         Class<?> clazz = obj.getClass();
+
+        if (!clazz.isAnnotationPresent(CommandRegistration.class)) {
+            return;
+        }
+
         for(Method method : clazz.getDeclaredMethods()) {
-            if(method.isAnnotationPresent(Command.class) && clazz.isAnnotationPresent(CommandRegistration.class)) {
+            if(method.isAnnotationPresent(Command.class)) {
                 //commands.add(new CommandEntry(this, obj, method));
                 commands.add(entryFactory.create(this, obj, method));
 
@@ -162,7 +172,21 @@ public abstract class CommandLib {
                         usagePrinterManager.registerUsageLogging(usage, commandName);
 
                 }
-
+            } else if (method.getParameterCount() == 1
+                    && method.getParameters()[0].getType().equals(SuggestionProviderStore.class)) {
+                // Invoke provider modifying method
+                // void populateProviders(SuggestionProviderStore store) {
+                //    store.registerProvider(name, provider);
+                // }
+                //
+                // @Command
+                // void command(@Arg("arg") @Suggest(name) String arg) {
+                // }
+                try {
+                    method.invoke(obj, suggestionStore);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

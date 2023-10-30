@@ -8,8 +8,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class EntryTests {
 
@@ -58,9 +57,23 @@ public class EntryTests {
 
     @Test
     public void testSuggestions() {
-        Set<String> completions = testLibrary.completeSubcommands("/test", new String[0]);
+        Set<String> completions = testLibrary.completeSubcommands(null, "/test", new String[] {""});
         System.out.println(completions);
-        assertFalse(completions.isEmpty());
+        assertEquals(4, completions.size());
+        assertTrue(completions.contains("command1"));
+        assertTrue(completions.contains("command2"));
+        assertTrue(completions.contains("command3"));
+        assertTrue(completions.contains("dontcontinue"));
+    }
+
+    @Test
+    public void testSuggestionsByProvider() {
+        Set<String> completions = testLibrary.completeSubcommands(null, "/test", new String[] {"command3", ""});
+        System.out.println(completions);
+        assertEquals(3, completions.size());
+        assertTrue(completions.contains("suggestion1"));
+        assertTrue(completions.contains("suggestion2"));
+        assertTrue(completions.contains("suggestion3"));
     }
 
 }

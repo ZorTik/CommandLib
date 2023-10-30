@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class TestCommandLib extends CommandLib {
+public class TestCommandLib extends CommandLib<Object> {
 
     private final List<CommandEntry> entries;
     private final Map<UUID, TestReport> reports;
