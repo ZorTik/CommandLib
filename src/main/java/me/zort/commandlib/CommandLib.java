@@ -31,7 +31,7 @@ public abstract class CommandLib<S> {
     private final UsagePrinterManager usagePrinterManager;
     @Getter(AccessLevel.PROTECTED)
     private final ContextualCollection<CommandArgumentRule> argumentRules;
-    @Getter(AccessLevel.PROTECTED)
+    @Getter
     private final SuggestionProviderStore suggestionStore;
     @Setter
     private CommandEntryFactory entryFactory;
