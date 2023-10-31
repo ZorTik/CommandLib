@@ -20,7 +20,7 @@ Flexible library for Bukkit &amp; BungeeCord commands. Uses simple command regis
 public class KillCommandHandlers {
 
     @Command("{...args}")
-    public boolean permissionHandler(Player sender) {
+    public boolean permissionHandler(Player sender) { // This is a middleware
         if(!sender.hasPermission("example.kill")) {
             sender.sendMessage("You don't have permission to do this!");
             return false;
