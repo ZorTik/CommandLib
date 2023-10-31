@@ -103,16 +103,23 @@ public abstract class CommandLib<S> {
 
         boolean nonExistent = false;
 
-        if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
+        final String commandNameFinal = commandName;
+        final String[] argsFinal = args;
 
+        if (commands.stream().noneMatch(e -> e.isEligibleForUsage() && e.passes(commandNameFinal, argsFinal))) {
+            nonExistent = true;
+        }
+
+        if(!nonExistent && !doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
             if (args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
                 if (usagePrinterManager.invokeLoggerFor(sender, commandName, args, true))
                     return;
             }
-
-            doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
-
             nonExistent = true;
+        }
+
+        if (nonExistent) {
+            doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
         }
 
         usagePrinterManager.invokeLoggerFor(sender, commandName, args, nonExistent);
@@ -124,7 +131,9 @@ public abstract class CommandLib<S> {
         ArrayList<CommandEntry> iterCommands = new ArrayList<>(commands);
         boolean anySuccessful = false;
         for (CommandEntry entry : iterCommands) {
-            if(!pred.test(entry)) continue;
+            if(!pred.test(entry)) {
+                continue;
+            }
             try {
                 if(entry.invokeConditionally(sender, commandName, args)) {
                     anySuccessful = true;

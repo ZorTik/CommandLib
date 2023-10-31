@@ -55,6 +55,11 @@ public class TestCommand {
         printStream.println("Command three invoked with: " + arg);
     }
 
+    @Command(value = "{...args}", unknown = true)
+    public void unknown(PrintStream printStream) {
+        printStream.println("Unknown command!");
+    }
+
     public void suggestions(SuggestionProviderStore store) {
         store.registerProvider("argProvider", (sender, arg) -> {
             return List.of("suggestion1", "suggestion2", "suggestion3");

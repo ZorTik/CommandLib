@@ -1,5 +1,6 @@
 package me.zort.commandlib.test;
 
+import me.zort.commandlib.CommandEntry;
 import me.zort.commandlib.test.entry.TestCommand;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,12 @@ public class EntryTests {
 
         assertFalse(testLibrary.getReport(uuid).hasPassed("/test {...args}"));
         assertFalse(testLibrary.getReport(uuid).hasPassed("/test dontcontinue one"));
+    }
+
+    @Test
+    public void testUnknown() {
+        UUID uuid = testLibrary.test("/test", new String[]{"unknown"});
+        assertEquals(1, testLibrary.getReport(uuid).countPassed(CommandEntry::isErrorHandler));
     }
 
     @Test
