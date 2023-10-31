@@ -5,10 +5,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import me.zort.commandlib.annotation.Command;
+import me.zort.commandlib.annotation.CommandRegistration;
 import me.zort.commandlib.annotation.Usage;
 import me.zort.commandlib.rule.GeneralArgumentRule;
 import me.zort.commandlib.rule.OrArgumentRule;
 import me.zort.commandlib.rule.PlaceholderArgumentRule;
+import me.zort.commandlib.suggestion.SuggestionProviderStore;
+import me.zort.commandlib.usage.UsagePrinterManager;
 import me.zort.commandlib.util.CommandUtil;
 import me.zort.commandlib.util.ContextualCollection;
 
@@ -17,8 +20,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public abstract class CommandLib {
-
+// S = CommandSender
+public abstract class CommandLib<S> {
     public static final Gson GSON = new Gson();
 
     private final Iterable<Object> mappingObjects;
@@ -28,6 +31,8 @@ public abstract class CommandLib {
     private final UsagePrinterManager usagePrinterManager;
     @Getter(AccessLevel.PROTECTED)
     private final ContextualCollection<CommandArgumentRule> argumentRules;
+    @Getter
+    private final SuggestionProviderStore suggestionStore;
     @Setter
     private CommandEntryFactory entryFactory;
 
@@ -39,7 +44,8 @@ public abstract class CommandLib {
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
         this.argumentRules = new ContextualCollection<>();
-        this.entryFactory = new DefaultEntryFactory();
+        this.suggestionStore = new SuggestionProviderStore();
+        this.entryFactory = CommandEntry::new;
 
         registerArgumentRule(new GeneralArgumentRule());
         registerArgumentRule(new PlaceholderArgumentRule());
@@ -88,32 +94,48 @@ public abstract class CommandLib {
     }
 
     // Command name with slash.
-    @SuppressWarnings("unchecked")
     protected void invoke(Object sender, String commandName, String[] args) {
         if(!commandName.startsWith("/")) {
             commandName = "/" + commandName;
         }
+        if (args.length == 1 && args[0].isEmpty())
+            args = new String[0];
 
         boolean nonExistent = false;
 
-        if(!doInvokeIf(sender, commandName, args, e -> !e.isErrorHandler())) {
-            doInvokeIf(sender, commandName, args, CommandEntry::isErrorHandler);
+        final String commandNameFinal = commandName;
+        final String[] argsFinal = args;
 
+        if (commands.stream().noneMatch(e -> e.isEligibleForUsage() && e.passes(commandNameFinal, argsFinal))) {
             nonExistent = true;
+        }
+
+        if(!nonExistent && !invoke(sender, commandName, args, e -> !e.isErrorHandler())) {
+            if (args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
+                if (usagePrinterManager.invokeLoggerFor(sender, commandName, args, true))
+                    return;
+            }
+            nonExistent = true;
+        }
+
+        if (nonExistent) {
+            invoke(sender, commandName, args, CommandEntry::isErrorHandler);
         }
 
         usagePrinterManager.invokeLoggerFor(sender, commandName, args, nonExistent);
     }
 
-    private boolean doInvokeIf(Object sender, String commandName, String[] args, Predicate<CommandEntry> pred) {
+    private boolean invoke(Object sender, String commandName, String[] args, Predicate<CommandEntry> pred) {
         ArrayList<CommandEntry> commands = new ArrayList<>(this.commands);
         commands.sort(Comparator.comparingInt(e -> e.getSyntax().split(" ").length));
         ArrayList<CommandEntry> iterCommands = new ArrayList<>(commands);
         boolean anySuccessful = false;
         for (CommandEntry entry : iterCommands) {
-            if(!pred.test(entry)) continue;
+            if(!pred.test(entry)) {
+                continue;
+            }
             try {
-                if(entry.invokeConditionally(sender, commandName, args)) {
+                if(entry.invoke(sender, commandName, args)) {
                     anySuccessful = true;
                 } else if(entry.isMiddleware() && entry.passes(commandName, args)) {
                     return false;
@@ -125,11 +147,11 @@ public abstract class CommandLib {
         return anySuccessful;
     }
 
-    public Set<String> completeSubcommands(String commandName, String[] args) {
+    public Set<String> completeSubcommands(S sender, String commandName, String[] args) {
         return getCommands()
                 .stream()
                 .filter(entry -> entry.matchesName(commandName))
-                .flatMap(entry -> entry.getSuggestions(commandName, args).stream())
+                .flatMap(entry -> entry.getSuggestions(sender, commandName, args).stream())
                 .collect(Collectors.toSet());
     }
 
@@ -139,30 +161,42 @@ public abstract class CommandLib {
 
     private void loadMappingObject(Object obj) {
         Class<?> clazz = obj.getClass();
+
+        if (!clazz.isAnnotationPresent(CommandRegistration.class)) {
+            return;
+        }
+
         for(Method method : clazz.getDeclaredMethods()) {
             if(method.isAnnotationPresent(Command.class)) {
                 //commands.add(new CommandEntry(this, obj, method));
                 commands.add(entryFactory.create(this, obj, method));
 
+                CommandRegistration registration = clazz.getDeclaredAnnotation(CommandRegistration.class);
                 Command commandAnnot = method.getDeclaredAnnotation(Command.class);
                 if(clazz.isAnnotationPresent(Usage.class) && !commandAnnot.unknown()) {
                     Usage usage = clazz.getDeclaredAnnotation(Usage.class);
-                    String commandName = CommandUtil.parseCommandName(commandAnnot.value());
+                    String commandName = CommandUtil.parseCommandName(registration.name());
 
-                    if(commandName != null) {
+                    if(commandName != null)
                         usagePrinterManager.registerUsageLogging(usage, commandName);
-                    }
 
                 }
-
+            } else if (method.getParameterCount() == 1
+                    && method.getParameters()[0].getType().equals(SuggestionProviderStore.class)) {
+                // Invoke provider modifying method
+                // void populateProviders(SuggestionProviderStore store) {
+                //    store.registerProvider(name, provider);
+                // }
+                //
+                // @Command
+                // void command(@Arg("arg") @Suggest(name) String arg) {
+                // }
+                try {
+                    method.invoke(obj, suggestionStore);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
-    }
-
-    private static class DefaultEntryFactory implements CommandEntryFactory {
-        @Override
-        public CommandEntry create(CommandLib commandLib, Object object, Method method) {
-            return new CommandEntry(commandLib, object, method);
         }
     }
 

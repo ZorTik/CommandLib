@@ -33,6 +33,10 @@ public class TestReport {
         return (int) getPassed().stream().filter(predicate).count();
     }
 
+    public int countPassedCommands() {
+        return countPassed(e -> !e.isMiddleware() && !e.isErrorHandler());
+    }
+
     public List<CommandEntry> getPassed() {
         List<CommandEntry> entries = new ArrayList<>();
         for (CommandEntry entry : this.reports.keySet()) {

@@ -6,7 +6,10 @@ import lombok.Data;
 import lombok.Getter;
 import me.zort.commandlib.annotation.Arg;
 import me.zort.commandlib.annotation.Command;
-import me.zort.commandlib.annotation.CommandMeta;
+import me.zort.commandlib.annotation.CommandRegistration;
+import me.zort.commandlib.annotation.Suggest;
+import me.zort.commandlib.suggestion.SuggestionProvider;
+import me.zort.commandlib.suggestion.SuggestionProviderStore;
 import me.zort.commandlib.util.Arrays;
 import me.zort.commandlib.util.NamingStrategy;
 import me.zort.commandlib.util.PrimitiveParser;
@@ -20,49 +23,67 @@ import java.util.*;
 import static me.zort.commandlib.util.CommandUtil.parseCommandName;
 
 public class CommandEntry {
-
+    private final CommandLib lib;
     @Getter
     private final CommandEntryMeta meta;
-
-    private final CommandLib commandLib;
     @Getter
     private final Object mappingObject;
     private final Method method;
     private final Command annot;
 
+    @AllArgsConstructor
+    @Data
+    private static class ParseResult {
+        private final Map<String, String> placeholders;
+        private final String[] relativeArgs;
+    }
 
-    public CommandEntry(CommandLib commandLib, Object mappingObject, Method method) {
-        this.commandLib = commandLib;
+    @AllArgsConstructor
+    @Getter
+    public static class ParsingProcessData {
+        private final Map<String, String> placeholders;
+        private final String[] relativeArgs;
+        private final String commandName;
+        private final String[] args;
+        private final Set<Class<? extends CommandArgumentRule>> passedRules;
+    }
+
+    public CommandEntry(CommandLib lib, Object mappingObject, Method method) {
+        this.lib = lib;
         this.mappingObject = mappingObject;
         this.method = method;
         if(!method.isAnnotationPresent(Command.class)) {
             throw new IllegalArgumentException("Method is not command-like!");
         }
-
         this.annot = method.getDeclaredAnnotation(Command.class);
         this.meta = new CommandEntryMeta();
-        if(method.getDeclaringClass().isAnnotationPresent(CommandMeta.class)) {
-            CommandMeta commandMeta = method.getDeclaringClass().getDeclaredAnnotation(CommandMeta.class);
-            this.meta.setDescription(commandMeta.description());
-            this.meta.setUsage(commandMeta.usage());
-            this.meta.setRequiredSenderType(commandMeta.requiredSenderType());
-            this.meta.setInvalidSenderMessage(commandMeta.invalidSenderMessage());
-            if(meta.getRequiredSenderType().equals(Object.class)) {
-                // Setting required sender type to sender type in the method
-                // if is present. If meta has specified sender type other
-                // than object, we'll use that.
-                for(Parameter parameter : method.getParameters()) {
-                    if(commandLib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
-                        // We'll use this sender type as required.
-                        this.meta.setRequiredSenderType(parameter.getType());
-                        break;
-                    }
+        if(!method.getDeclaringClass().isAnnotationPresent(CommandRegistration.class)) {
+            throw new RuntimeException(String.format("Command class [%s] is not annotated with @CommandRegistration!",
+                    mappingObject.getClass().getName()));
+        }
+
+        CommandRegistration commandRegistration = method.getDeclaringClass().getDeclaredAnnotation(CommandRegistration.class);
+        this.meta.setName(commandRegistration.name());
+        this.meta.setDescription(commandRegistration.description());
+        this.meta.setUsage(commandRegistration.usage());
+        this.meta.setRequiredSenderType(commandRegistration.requiredSenderType());
+        this.meta.setInvalidSenderMessage(commandRegistration.invalidSenderMessage());
+        if(meta.getRequiredSenderType().equals(Object.class)) {
+            // Setting required sender type to sender type in the method
+            // if is present. If meta has specified sender type other
+            // than object, we'll use that.
+            for(Parameter parameter : method.getParameters()) {
+                if(lib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
+                    // We'll use this sender type as required.
+                    this.meta.setRequiredSenderType(parameter.getType());
+                    break;
                 }
             }
         }
+        populateSuggestionStore();
     }
 
-    public boolean invokeConditionally(Object sender, String commandName, String[] args) {
+    public boolean invoke(Object sender, String commandName, String[] args) {
         ParseResult parseResult = parse(commandName, args);
         if(parseResult == null) {
             // Is not passing conditions.
@@ -72,7 +93,7 @@ public class CommandEntry {
             // Invalid sender type.
             String[] invalidSenderMessage = meta.getInvalidSenderMessage();
             if(invalidSenderMessage.length > 0) {
-                commandLib.sendMessage(sender, Arrays.map(invalidSenderMessage, commandLib::colorize));
+                lib.sendMessage(sender, Arrays.map(invalidSenderMessage, lib::colorize));
             }
             // Returning true because we don't want to invoke invalid syntax methods.
             return true;
@@ -99,7 +120,7 @@ public class CommandEntry {
                     if(parser.isParsed()) {
                         value = parser.getAsObject();
                     } else {
-                        commandLib.getUsagePrinterManager().invokeLoggerFor(sender, commandName, args, false);
+                        lib.getUsagePrinterManager().invokeLoggerFor(sender, commandName, args, false);
                     }
                     log("Param " + paramName + " is " + value.getClass().getSimpleName() + ": " + value);
                 }
@@ -115,11 +136,11 @@ public class CommandEntry {
             invokeArgs[i] = value;
         }
         try {
-            commandLib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
+            lib.log("Placeholders after parse: " + CommandLib.GSON.toJson(placeholders));
             if(Primitives.wrap(method.getReturnType()).equals(Boolean.class)) {
                 return (Boolean) method.invoke(mappingObject, invokeArgs);
             } else {
-                commandLib.log("Invoking command " + commandName + " with args " + java.util.Arrays.toString(invokeArgs));
+                lib.log("Invoking command " + commandName + " with args " + java.util.Arrays.toString(invokeArgs));
                 method.invoke(mappingObject, invokeArgs);
             }
             return true;
@@ -132,7 +153,7 @@ public class CommandEntry {
     public boolean passes(String commandName, String[] args) {
         String syntax = getSyntax();
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith(" {...args}") && syntaxArgs.length != args.length)) {
+        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith("{...args}") && syntaxArgs.length != args.length)) {
             // Provided is not this command.
             return false;
         }
@@ -181,23 +202,28 @@ public class CommandEntry {
         for(int i = 0; i < args.length; i++) {
             String arg = args[i];
             if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
-                // We're in the last argument and it's a varargs.
+                // We're in the last argument, and it's a varargs.
                 return true;
             } else if(i >= syntaxArgs.length) {
                 return false;
             } else if(isPlaceholderArg(syntaxArgs[i])) {
                 continue;
             }
-            boolean last = i >= args.length - 1;
+
+            /*boolean last = i == args.length - 1;
             if((last && !syntaxArgs[i].startsWith(arg)) || (!last && !syntaxArgs[i].equals(arg))) {
+                return false;
+            }*/
+
+            if (!syntaxArgs[i].startsWith(arg)) {
                 return false;
             }
         }
         return true;
     }
 
-    private Optional<String> obtainSuggestionMatch(String commandName, String[] args) {
-        args = (String[]) ArrayUtils.add(args, "");
+    public List<String> getSuggestions(Object sender, String commandName, String[] args) {
+        //args = (String[]) ArrayUtils.add(args, "");
         if(matchesForSuggestion(commandName, args)) {
             int argIndex = args.length - 1;
             String[] mappingArgs = annot.value().split(" ");
@@ -206,15 +232,24 @@ public class CommandEntry {
                     mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
                 String arg = mappingArgs[argIndex];
                 if(!arg.equals("{...args}")) {
-                    return Optional.of(arg);
+                    if (isPlaceholderArg(arg)) {
+                        // This argument is a placeholder.
+                        String name = arg.substring(1, arg.length() - 1);
+                        Parameter parameter = getArgParameter(name);
+                        if (parameter != null && parameter.isAnnotationPresent(Suggest.class)) {
+                            SuggestionProvider provider = lib.getSuggestionStore()
+                                    .getProvider(parameter.getDeclaredAnnotation(Suggest.class).value());
+                            if (provider != null) {
+                                return provider.suggest(sender, args[args.length - 1]);
+                            }
+                        }
+                    } else {
+                        return Collections.singletonList(arg);
+                    }
                 }
             } catch(IndexOutOfBoundsException ignored) {}
         }
-        return Optional.empty();
-    }
-
-    public List<String> getSuggestions(String commandName, String[] args) {
-        return obtainSuggestionMatch(commandName, args).map(Collections::singletonList).orElse(Collections.emptyList());
+        return Collections.emptyList();
     }
 
     public String buildUsage() {
@@ -258,6 +293,10 @@ public class CommandEntry {
         }
         if(syntax.endsWith(" {...args}")) {
             syntaxArgs = (String[]) ArrayUtils.remove(syntaxArgs, syntaxArgs.length - 1);
+        } else if(syntax.equals("{...args}")) {
+            syntaxArgs = new String[0];
+        } else if(syntax.isEmpty()) {
+            syntaxArgs = new String[0];
         }
         if(args.length - syntaxArgs.length < 0) {
             // Not enough arguments.
@@ -276,7 +315,7 @@ public class CommandEntry {
                 ParsingProcessData processData = new ParsingProcessData(ph, ra, commandName, args, passedRules);
                 String syntaxName = syntaxArgs[i];
 
-                List<CommandArgumentRule> rules = commandLib.getArgumentRules().getAllInContext("/" + parseCommandName(commandName) + " " + String.join(" ", args));
+                List<CommandArgumentRule> rules = lib.getArgumentRules().getAllInContext("/" + parseCommandName(commandName) + " " + String.join(" ", args));
 
                 for (CommandArgumentRule rule : new ArrayList<>(rules)) {
                     boolean passed = false;
@@ -306,21 +345,16 @@ public class CommandEntry {
     }
 
     public void register() {
-        commandLib.register(this);
+        lib.register(this);
     }
 
     public String getName() {
-        String[] s = getSyntax().toLowerCase().split(" ");
-        if(s[0].startsWith("/")) {
-            return s[0].substring(1);
-        } else {
-            return s[0];
-        }
+        return getMeta().getName().replaceAll("/", "");
     }
 
     public String getSyntax() {
         String syntax = annot.value();
-        if(isErrorHandler() && !syntax.endsWith(" {...args}")) {
+        if(isErrorHandler() && !syntax.endsWith(" {...args}") && !syntax.equals("{...args}")) {
             syntax += " {...args}";
         }
         return syntax;
@@ -328,7 +362,22 @@ public class CommandEntry {
 
     public String[] getSyntaxArgs() {
         String syntax = getSyntax();
-        return (String[]) ArrayUtils.subarray(syntax.split(" "), 1, syntax.split(" ").length);
+        if (syntax.isEmpty())
+            return new String[0];
+
+        return syntax.split(" ");
+    }
+
+    public Parameter getArgParameter(String name) {
+        for(Parameter parameter : method.getParameters()) {
+            if(parameter.isAnnotationPresent(Arg.class)) {
+                Arg arg = parameter.getDeclaredAnnotation(Arg.class);
+                if(arg.value().equals(name)) {
+                    return parameter;
+                }
+            }
+        }
+        return null;
     }
 
     public boolean isErrorHandler() {
@@ -349,27 +398,12 @@ public class CommandEntry {
     }
 
     private void log(String s) {
-        commandLib.log(s);
+        lib.log(s);
     }
 
-    @AllArgsConstructor
-    @Data
-    private static class ParseResult {
-
-        private final Map<String, String> placeholders;
-        private final String[] relativeArgs;
-
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class ParsingProcessData {
-        private final Map<String, String> placeholders;
-        private final String[] relativeArgs;
-        private final String commandName;
-        private final String[] args;
-        private final Set<Class<? extends CommandArgumentRule>> passedRules;
-
+    private void populateSuggestionStore() {
+        SuggestionProviderStore store = lib.getSuggestionStore();
+        // TODO: Populate suggestion store
     }
 
 }

@@ -9,16 +9,16 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Command {
 
-    // @Command("/kill player {player} {reason}")
+    // @Command("player {player} {reason}")
     // public void kill(CommandSender sender, String player, String reason)
 
-    // @Command("/kill player {player} {reason} {...args}")
+    // @Command("player {player} {reason} {...args}")
     // public void killWithRelativeArgs(CommandSender sender, String player, String reason, String[] relativeArgs)
 
     // Error/Bad Syntax handler
-    // @Command(value = "/kill player", unknown = true)
+    // @Command(value = "player", unknown = true)
     // public void killBadSyntax(CommandSender sender)
-    String value();
+    String value() default "";
     // If this mapping should work as unknown handler.
     boolean unknown() default false;
 

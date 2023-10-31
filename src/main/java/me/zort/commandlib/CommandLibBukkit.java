@@ -9,7 +9,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CommandLibBukkit extends CommandLib {
+public class CommandLibBukkit extends CommandLib<CommandSender> {
 
     private final List<Command> registeredCommands;
     private final Plugin plugin;
@@ -41,8 +41,15 @@ public class CommandLibBukkit extends CommandLib {
 
                 @Override
                 public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+                    if (alias.endsWith(" ")) {
+                        // Input ends with empty space, so it is considered to be start of
+                        // new argument.
+                        args = Arrays.copyOf(args, args.length + 1);
+                        args[args.length - 1] = "";
+                    }
+
                     Object mappingObject = entry.getMappingObject();
-                    List<String> tabCompletions = new ArrayList<>(completeSubcommands(entry.getName(), args));
+                    List<String> tabCompletions = new ArrayList<>(completeSubcommands(sender, entry.getName(), args));
                     if (!tabCompletions.isEmpty()) {
                         return tabCompletions;
                     } else if (mappingObject instanceof TabCompleter
