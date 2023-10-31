@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.TabCompleteEvent;
@@ -12,15 +13,16 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 public class CommandLibBukkit extends CommandLib<CommandSender> {
 
     private final List<Command> registeredCommands;
     private final Plugin plugin;
-    private RegisteringStrategy registeringStrategy = RegisteringStrategy.COMMAND_MAP;
     private boolean anyRegistered = false;
-    private LocalPreprocessListener registeredListener = null;
+    private RegisteringStrategy registeringStrategy = RegisteringStrategy.COMMAND_MAP;
+    private LocalPreprocessListener preprocessListener = null;
 
     public enum RegisteringStrategy {
         COMMAND_MAP, PLUGIN, PREPROCESS
@@ -30,9 +32,17 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
     }
 
     private class LocalPreprocessListener implements Listener {
+        private final Map<String, BiConsumer<CommandSender, String[]>> execFuncs = new ConcurrentHashMap<>();
+        private final Map<String, TabCompleter> tabCompleteFuncs = new ConcurrentHashMap<>();
+
         @EventHandler
         public void onCommandPreprocess(PlayerCommandPreprocessEvent e) {
-            // TODO
+            String[] args = e.getMessage().split(" ");
+            BiConsumer<CommandSender, String[]> exec = execFuncs.get(args[0].substring(1));
+            if (exec != null) {
+                e.setCancelled(true);
+                exec.accept(e.getPlayer(), Arrays.copyOfRange(args, 1, args.length));
+            }
         }
 
         @EventHandler
@@ -161,11 +171,12 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
             BiConsumer<CommandSender, String[]> exec,
             TabCompleter tabCompleteFunc
     ) {
-        if (registeredListener == null) {
-            registeredListener = new LocalPreprocessListener();
-            Bukkit.getPluginManager().registerEvents(registeredListener, plugin);
+        if (preprocessListener == null) {
+            preprocessListener = new LocalPreprocessListener();
+            Bukkit.getPluginManager().registerEvents(preprocessListener, plugin);
         }
-        // TODO
+        preprocessListener.execFuncs.put(entry.getName(), exec);
+        preprocessListener.tabCompleteFuncs.put(entry.getName(), tabCompleteFunc);
         return true;
     }
 
@@ -187,6 +198,16 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
             PluginCommand command = ((JavaPlugin) plugin).getCommand(entry.getName());
             if (command != null) {
                 command.setExecutor(null);
+            }
+        } else if (registeringStrategy.equals(RegisteringStrategy.PREPROCESS)) {
+            if (preprocessListener == null) {
+                return;
+            }
+            preprocessListener.execFuncs.remove(entry.getName());
+            preprocessListener.tabCompleteFuncs.remove(entry.getName());
+            if (preprocessListener.execFuncs.isEmpty() && preprocessListener.tabCompleteFuncs.isEmpty()) {
+                HandlerList.unregisterAll(preprocessListener);
+                preprocessListener = null;
             }
         }
     }
