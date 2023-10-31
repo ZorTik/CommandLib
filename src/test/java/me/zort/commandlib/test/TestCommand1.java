@@ -11,7 +11,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class EntryTests {
+public class TestCommand1 {
 
     private static final TestCommandLib testLibrary = new TestCommandLib(Collections.singletonList(new TestCommand()));
 

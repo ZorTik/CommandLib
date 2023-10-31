@@ -15,8 +15,8 @@ public class TestCommandEntry extends CommandEntry {
     }
 
     @Override
-    public boolean invokeConditionally(Object sender, String commandName, String[] args) {
-        boolean result = super.invokeConditionally(sender, commandName, args);
+    public boolean invoke(Object sender, String commandName, String[] args) {
+        boolean result = super.invoke(sender, commandName, args);
         if(commandLib instanceof TestCommandLib) {
             ((TestCommandLib) commandLib).report(this, result);
         }

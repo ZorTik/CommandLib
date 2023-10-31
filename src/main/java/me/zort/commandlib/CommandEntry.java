@@ -19,7 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import static me.zort.commandlib.util.CommandUtil.parseCommandName;
 
@@ -84,7 +83,7 @@ public class CommandEntry {
         populateSuggestionStore();
     }
 
-    public boolean invokeConditionally(Object sender, String commandName, String[] args) {
+    public boolean invoke(Object sender, String commandName, String[] args) {
         ParseResult parseResult = parse(commandName, args);
         if(parseResult == null) {
             // Is not passing conditions.
@@ -355,7 +354,7 @@ public class CommandEntry {
 
     public String getSyntax() {
         String syntax = annot.value();
-        if(isErrorHandler() && !syntax.endsWith(" {...args}")) {
+        if(isErrorHandler() && !syntax.endsWith(" {...args}") && !syntax.equals("{...args}")) {
             syntax += " {...args}";
         }
         return syntax;
