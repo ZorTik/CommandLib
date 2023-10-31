@@ -1,6 +1,15 @@
 # CommandLib
 Flexible library for Bukkit &amp; BungeeCord commands. Uses simple command registering and handling syntax with automatic command registration!
 
+### Features:
+- Static commands
+- Bukkit & BungeeCord support
+- Built-in suggestion system
+- Middlewares
+- Error & Bad syntax handlers
+- Conditional commands
+- Custom sender support
+
 ### Example:
 ```java
 @CommandRegistration(
