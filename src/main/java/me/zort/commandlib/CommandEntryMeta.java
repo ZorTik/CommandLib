@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Data
-public class CommandEntryMeta {
+public class CommandEntryMeta implements CommandMeta {
 
     private String name;
     private String description = "";

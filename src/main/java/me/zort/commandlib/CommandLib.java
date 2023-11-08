@@ -21,7 +21,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 // S = CommandSender
-public abstract class CommandLib<S> {
+public abstract class CommandLib<S> implements Iterable<CommandMeta> {
     public static final Gson GSON = new Gson();
 
     private final Iterable<Object> mappingObjects;
@@ -91,6 +91,10 @@ public abstract class CommandLib<S> {
     public void unregisterAll() {
         commands.forEach(this::unregister);
         commands.clear();
+    }
+
+    public Map<String, CommandMeta> getDistinctCommands() {
+        return commands.stream().collect(Collectors.toMap(CommandEntry::getName, CommandEntry::getMeta));
     }
 
     // Command name with slash.
@@ -200,4 +204,8 @@ public abstract class CommandLib<S> {
         }
     }
 
+    @Override
+    public Iterator<CommandMeta> iterator() {
+        return getDistinctCommands().values().iterator();
+    }
 }
