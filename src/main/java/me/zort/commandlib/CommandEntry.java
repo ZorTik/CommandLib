@@ -23,7 +23,7 @@ import java.util.*;
 import static me.zort.commandlib.util.CommandUtil.parseCommandName;
 
 public class CommandEntry {
-    private final CommandLib lib;
+    private final CommandLib<?> lib;
     @Getter
     private final CommandEntryMeta meta;
     @Getter
@@ -48,7 +48,7 @@ public class CommandEntry {
         private final Set<Class<? extends CommandArgumentRule>> passedRules;
     }
 
-    public CommandEntry(CommandLib lib, Object mappingObject, Method method) {
+    public CommandEntry(CommandLib<?> lib, Object mappingObject, Method method) {
         this.lib = lib;
         this.mappingObject = mappingObject;
         this.method = method;
@@ -209,11 +209,6 @@ public class CommandEntry {
             } else if(isPlaceholderArg(syntaxArgs[i])) {
                 continue;
             }
-
-            /*boolean last = i == args.length - 1;
-            if((last && !syntaxArgs[i].startsWith(arg)) || (!last && !syntaxArgs[i].equals(arg))) {
-                return false;
-            }*/
 
             if (!syntaxArgs[i].startsWith(arg)) {
                 return false;
