@@ -10,13 +10,13 @@ import net.md_5.bungee.api.plugin.PluginManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommandLibProxy extends CommandLib {
+public final class CommandLibProxy extends CommandLib<CommandSender> {
 
     private final PluginManager pluginManager;
     private final List<Command> registeredCommands;
     private final Plugin plugin;
 
-    protected CommandLibProxy(Object plugin, Iterable<Object> mappingObjects) {
+    CommandLibProxy(Object plugin, Iterable<Object> mappingObjects) {
         super(mappingObjects);
         this.plugin = (Plugin) plugin;
         this.pluginManager = ProxyServer.getInstance().getPluginManager();

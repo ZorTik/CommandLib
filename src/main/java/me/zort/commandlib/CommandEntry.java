@@ -56,31 +56,7 @@ public class CommandEntry {
             throw new IllegalArgumentException("Method is not command-like!");
         }
         this.annot = method.getDeclaredAnnotation(Command.class);
-        this.meta = new CommandEntryMeta();
-        if(!method.getDeclaringClass().isAnnotationPresent(CommandRegistration.class)) {
-            throw new RuntimeException(String.format("Command class [%s] is not annotated with @CommandRegistration!",
-                    mappingObject.getClass().getName()));
-        }
-
-        CommandRegistration commandRegistration = method.getDeclaringClass().getDeclaredAnnotation(CommandRegistration.class);
-        this.meta.setName(commandRegistration.name());
-        this.meta.setDescription(commandRegistration.description());
-        this.meta.setUsage(commandRegistration.usage());
-        this.meta.setRequiredSenderType(commandRegistration.requiredSenderType());
-        this.meta.setInvalidSenderMessage(commandRegistration.invalidSenderMessage());
-        if(meta.getRequiredSenderType().equals(Object.class)) {
-            // Setting required sender type to sender type in the method
-            // if is present. If meta has specified sender type other
-            // than object, we'll use that.
-            for(Parameter parameter : method.getParameters()) {
-                if(lib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
-                    // We'll use this sender type as required.
-                    this.meta.setRequiredSenderType(parameter.getType());
-                    break;
-                }
-            }
-        }
-        populateSuggestionStore();
+        this.meta = buildMeta();
     }
 
     public boolean invoke(Object sender, String commandName, String[] args) {
@@ -396,9 +372,32 @@ public class CommandEntry {
         lib.log(s);
     }
 
-    private void populateSuggestionStore() {
-        SuggestionProviderStore store = lib.getSuggestionStore();
-        // TODO: Populate suggestion store
+    private CommandEntryMeta buildMeta() {
+        CommandEntryMeta meta = new CommandEntryMeta();
+        if(!method.getDeclaringClass().isAnnotationPresent(CommandRegistration.class)) {
+            throw new RuntimeException(String.format("Command class [%s] is not annotated with @CommandRegistration!",
+                    mappingObject.getClass().getName()));
+        }
+
+        CommandRegistration commandRegistration = method.getDeclaringClass().getDeclaredAnnotation(CommandRegistration.class);
+        meta.setName(commandRegistration.name());
+        meta.setDescription(commandRegistration.description());
+        meta.setUsage(commandRegistration.usage());
+        meta.setRequiredSenderType(commandRegistration.requiredSenderType());
+        meta.setInvalidSenderMessage(commandRegistration.invalidSenderMessage());
+        if(meta.getRequiredSenderType().equals(Object.class)) {
+            // Setting required sender type to sender type in the method
+            // if is present. If meta has specified sender type other
+            // than object, we'll use that.
+            for(Parameter parameter : method.getParameters()) {
+                if(lib.getDefaultSenderType().isAssignableFrom(parameter.getType())) {
+                    // We'll use this sender type as required.
+                    meta.setRequiredSenderType(parameter.getType());
+                    break;
+                }
+            }
+        }
+        return meta;
     }
 
 }

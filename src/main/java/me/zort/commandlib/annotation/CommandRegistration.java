@@ -17,7 +17,9 @@ public @interface CommandRegistration {
     String name();
     String description() default "";
     String usage() default "";
+    @Deprecated
     Class<?> requiredSenderType() default Object.class;
+    @Deprecated
     String[] invalidSenderMessage() default {};
 
 }
