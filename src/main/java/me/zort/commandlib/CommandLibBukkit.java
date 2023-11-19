@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-public class CommandLibBukkit extends CommandLib<CommandSender> {
+public final class CommandLibBukkit extends CommandLib<CommandSender> {
 
     private final List<Command> registeredCommands;
     private final Plugin plugin;
@@ -31,7 +31,7 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
     private interface LocalCommandExecutor extends CommandExecutor, TabCompleter {
     }
 
-    private class LocalPreprocessListener implements Listener {
+    private static class LocalPreprocessListener implements Listener {
         private final Map<String, BiConsumer<CommandSender, String[]>> execFuncs = new ConcurrentHashMap<>();
         private final Map<String, TabCompleter> tabCompleteFuncs = new ConcurrentHashMap<>();
 
@@ -51,7 +51,7 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
         }
     }
 
-    protected CommandLibBukkit(Object plugin, Iterable<Object> mappingObjects) {
+    CommandLibBukkit(Object plugin, Iterable<Object> mappingObjects) {
         super(mappingObjects);
         this.plugin = (Plugin) plugin;
         this.registeredCommands = new ArrayList<>();
@@ -86,7 +86,7 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
                     && (tabCompletions = ((TabCompleter) mappingObject).onTabComplete(sender, command, alias, args)) != null) {
                 return tabCompletions;
             } else {
-                return command.tabComplete(sender, alias, args);
+                return null;
             }
         };
 
@@ -126,7 +126,11 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
 
                 @Override
                 public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
-                    return Objects.requireNonNull(tabCompleteFunc.onTabComplete(sender, this, alias, args));
+                    List<String> completions = tabCompleteFunc.onTabComplete(sender, this, alias, args);
+                    if (completions == null) {
+                        completions = super.tabComplete(sender, alias, args);
+                    }
+                    return completions;
                 }
             };
             if(commandMap.register(plugin.getName(), command)) {
@@ -160,7 +164,7 @@ public class CommandLibBukkit extends CommandLib<CommandSender> {
 
             @Override
             public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-                return Objects.requireNonNull(tabCompleteFunc.onTabComplete(sender, command, label, args));
+                return tabCompleteFunc.onTabComplete(sender, command, label, args);
             }
         });
         return true;

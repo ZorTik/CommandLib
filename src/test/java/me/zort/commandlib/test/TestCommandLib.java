@@ -23,11 +23,15 @@ public class TestCommandLib extends CommandLib<Object> {
         setEntryFactory(TestCommandEntry::new);
     }
 
-    protected UUID test(String commandName, String[] args) {
+    protected UUID test(String command, String[] args) {
+        return test(System.out, command, args);
+    }
+
+    protected UUID test(Object sender, String command, String[] args) {
         UUID uuid = currentReportId = UUID.randomUUID();
         reports.put(uuid, new TestReport());
 
-        super.invoke(System.out, commandName, args);
+        super.invoke(sender, command, args);
 
         return uuid;
     }
