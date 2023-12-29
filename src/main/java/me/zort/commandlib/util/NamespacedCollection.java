@@ -6,17 +6,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ContextualCollection<T> implements Iterable<T> {
+public class NamespacedCollection<T> implements Iterable<T> {
 
     private final String namespace;
-    private final List<ContextualCollection<T>> children;
+    private final List<NamespacedCollection<T>> children;
     private final List<T> values;
 
-    public ContextualCollection() {
+    public NamespacedCollection() {
         this("");
     }
 
-    private ContextualCollection(String namespace) {
+    private NamespacedCollection(String namespace) {
         this.namespace = namespace;
         this.children = new CopyOnWriteArrayList<>();
         this.values = new CopyOnWriteArrayList<>();
@@ -25,22 +25,22 @@ public class ContextualCollection<T> implements Iterable<T> {
     // Save object based on provided context.
     // Example: Context "test " will be applicable for all requests for get
     // starting with "test ".
-    public boolean save(String context, T object) {
-        if(!isInputApplicable(context))
+    public boolean save(String prefix, T object) {
+        if(!isInputApplicable(prefix))
             return false;
 
-        context = context.replaceFirst(namespace, "");
-        if(context.isEmpty()) {
+        prefix = prefix.replaceFirst(namespace, "");
+        if(prefix.isEmpty()) {
             values.add(object);
         } else {
-            for (ContextualCollection<T> child : children) {
-                if(child.save(context, object)) {
+            for (NamespacedCollection<T> child : children) {
+                if(child.save(prefix, object)) {
                     return true;
                 }
             }
 
-            ContextualCollection<T> newOne = new ContextualCollection<>(namespace + context);
-            if(!newOne.save(context, object)) {
+            NamespacedCollection<T> newOne = new NamespacedCollection<>(namespace + prefix);
+            if(!newOne.save(prefix, object)) {
                 // WTF??
                 throw new RuntimeException("Something went wrong while saving object to context.");
             }
@@ -75,8 +75,8 @@ public class ContextualCollection<T> implements Iterable<T> {
         return getAll().iterator();
     }
 
-    public boolean isInputApplicable(String input) {
-        return input.startsWith(namespace);
+    public boolean isInputApplicable(String prefix) {
+        return prefix.startsWith(namespace);
     }
 
 }

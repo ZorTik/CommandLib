@@ -13,7 +13,7 @@ import me.zort.commandlib.rule.PlaceholderArgumentRule;
 import me.zort.commandlib.suggestion.SuggestionProviderStore;
 import me.zort.commandlib.usage.UsagePrinterManager;
 import me.zort.commandlib.util.CommandUtil;
-import me.zort.commandlib.util.ContextualCollection;
+import me.zort.commandlib.util.NamespacedCollection;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -30,7 +30,7 @@ public abstract class CommandLib<S> implements Iterable<CommandMeta> {
     @Getter(AccessLevel.PROTECTED)
     private final UsagePrinterManager usagePrinterManager;
     @Getter(AccessLevel.PROTECTED)
-    private final ContextualCollection<CommandArgumentRule> argumentRules;
+    private final NamespacedCollection<CommandArgumentRule> argumentRules;
     @Getter
     private final SuggestionProviderStore suggestionStore;
     @Setter
@@ -43,7 +43,7 @@ public abstract class CommandLib<S> implements Iterable<CommandMeta> {
         this.mappingObjects = mappingObjects;
         this.commands = Collections.synchronizedList(new ArrayList<>());
         this.usagePrinterManager = new UsagePrinterManager(commands);
-        this.argumentRules = new ContextualCollection<>();
+        this.argumentRules = new NamespacedCollection<>();
         this.suggestionStore = new SuggestionProviderStore();
         this.entryFactory = CommandEntry::new;
 
@@ -93,40 +93,36 @@ public abstract class CommandLib<S> implements Iterable<CommandMeta> {
         commands.clear();
     }
 
-    public Map<String, CommandMeta> getDistinctCommands() {
-        return commands.stream().collect(Collectors.toMap(CommandEntry::getName, CommandEntry::getMeta));
-    }
-
-    // Command name with slash.
-    protected void invoke(Object sender, String commandName, String[] args) {
-        if(!commandName.startsWith("/")) {
-            commandName = "/" + commandName;
+    public void invoke(Object sender, String cmd, String[] args) {
+        if(!cmd.startsWith("/")) {
+            cmd = "/" + cmd;
         }
         if (args.length == 1 && args[0].isEmpty())
             args = new String[0];
 
-        boolean nonExistent = false;
+        boolean notExists = false;
 
-        final String commandNameFinal = commandName;
+        final String commandNameFinal = cmd;
         final String[] argsFinal = args;
 
         if (commands.stream().noneMatch(e -> e.isEligibleForUsage() && e.passes(commandNameFinal, argsFinal))) {
-            nonExistent = true;
+            notExists = true;
         }
 
-        if(!nonExistent && !invoke(sender, commandName, args, e -> !e.isErrorHandler())) {
-            if (args.length > 0 && args[args.length - 1].equalsIgnoreCase("help")) {
-                if (usagePrinterManager.invokeLoggerFor(sender, commandName, args, true))
-                    return;
+        if(!notExists && !invoke(sender, cmd, args, e -> !e.isErrorHandler())) {
+            if (args.length > 0
+                    && args[args.length - 1].equalsIgnoreCase("help")
+                    && usagePrinterManager.invokeLoggerFor(sender, cmd, args, true)) {
+                return;
             }
-            nonExistent = true;
+            notExists = true;
         }
 
-        if (nonExistent) {
-            invoke(sender, commandName, args, CommandEntry::isErrorHandler);
+        if (notExists) {
+            invoke(sender, cmd, args, CommandEntry::isErrorHandler);
         }
 
-        usagePrinterManager.invokeLoggerFor(sender, commandName, args, nonExistent);
+        usagePrinterManager.invokeLoggerFor(sender, cmd, args, notExists);
     }
 
     private boolean invoke(Object sender, String commandName, String[] args, Predicate<CommandEntry> pred) {
@@ -202,6 +198,10 @@ public abstract class CommandLib<S> implements Iterable<CommandMeta> {
                 }
             }
         }
+    }
+
+    public Map<String, CommandMeta> getDistinctCommands() {
+        return commands.stream().collect(Collectors.toMap(CommandEntry::getName, CommandEntry::getMeta));
     }
 
     @Override
