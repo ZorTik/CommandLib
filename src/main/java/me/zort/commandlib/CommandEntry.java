@@ -20,6 +20,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 
+import static me.zort.commandlib.Constants.CONTINUE_ARGS;
+import static me.zort.commandlib.Constants.CONTINUE_ARGS_PH;
 import static me.zort.commandlib.util.CommandUtil.parseCommandName;
 
 public class CommandEntry {
@@ -129,7 +131,7 @@ public class CommandEntry {
     public boolean passes(String commandName, String[] args) {
         String syntax = getSyntax();
         String[] syntaxArgs = getSyntaxArgs();
-        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith("{...args}") && syntaxArgs.length != args.length)) {
+        if(!matchesName(commandName) || !passesArgs(args) || (!syntax.endsWith(CONTINUE_ARGS_PH) && syntaxArgs.length != args.length)) {
             // Provided is not this command.
             return false;
         }
@@ -150,7 +152,7 @@ public class CommandEntry {
             if(syntaxArg.startsWith("{") && syntaxArg.endsWith("}")) {
                 // This is a placeholder.
 
-                if(syntaxArg.contains("...args")) {
+                if(syntaxArg.contains(CONTINUE_ARGS)) {
                     return true;
                 }
                 continue;
@@ -172,12 +174,12 @@ public class CommandEntry {
         String[] syntaxArgs = getSyntaxArgs();
         if(!matchesName(commandName)
                 || syntaxArgs.length == 0
-                || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals("...args"))) {
+                || (args.length > syntaxArgs.length && !syntaxArgs[syntaxArgs.length - 1].equals(CONTINUE_ARGS))) {
             return false;
         }
         for(int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals("...args")) {
+            if(i >= syntaxArgs.length && syntaxArgs[syntaxArgs.length - 1].equals(CONTINUE_ARGS)) {
                 // We're in the last argument, and it's a varargs.
                 return true;
             } else if(i >= syntaxArgs.length) {
@@ -202,7 +204,7 @@ public class CommandEntry {
                 if(mappingArgs[0].startsWith("/"))
                     mappingArgs = (String[]) ArrayUtils.subarray(mappingArgs, 1, mappingArgs.length);
                 String arg = mappingArgs[argIndex];
-                if(!arg.equals("{...args}")) {
+                if(!arg.equals(CONTINUE_ARGS_PH)) {
                     if (isPlaceholderArg(arg)) {
                         // This argument is a placeholder.
                         String name = arg.substring(1, arg.length() - 1);
@@ -262,9 +264,9 @@ public class CommandEntry {
         if(!passes(commandName, args)) {
             return null;
         }
-        if(syntax.endsWith(" {...args}")) {
+        if(syntax.endsWith(" " + CONTINUE_ARGS_PH)) {
             syntaxArgs = (String[]) ArrayUtils.remove(syntaxArgs, syntaxArgs.length - 1);
-        } else if(syntax.equals("{...args}")) {
+        } else if(syntax.equals(CONTINUE_ARGS_PH)) {
             syntaxArgs = new String[0];
         } else if(syntax.isEmpty()) {
             syntaxArgs = new String[0];
@@ -325,8 +327,8 @@ public class CommandEntry {
 
     public String getSyntax() {
         String syntax = annot.value();
-        if(isErrorHandler() && !syntax.endsWith(" {...args}") && !syntax.equals("{...args}")) {
-            syntax += " {...args}";
+        if(isErrorHandler() && !syntax.endsWith(" " + CONTINUE_ARGS_PH) && !syntax.equals(CONTINUE_ARGS_PH)) {
+            syntax += " " + CONTINUE_ARGS_PH;
         }
         return syntax;
     }
@@ -361,7 +363,7 @@ public class CommandEntry {
 
     public boolean hasRelativeArgs() {
         String[] syntaxArgs = getSyntaxArgs();
-        return syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals("{...args}");
+        return syntaxArgs.length > 0 && syntaxArgs[syntaxArgs.length - 1].equals(CONTINUE_ARGS_PH);
     }
 
     public boolean matchesName(String name) {
